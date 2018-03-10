@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		07089B512053E6440080E10C /* TodoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07089B502053E6440080E10C /* TodoPicker.swift */; };
 		073FA4DF2050FB0400168DA5 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 073FA4DE2050FB0400168DA5 /* AppDelegate.swift */; };
 		073FA4E12050FB0400168DA5 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 073FA4E02050FB0400168DA5 /* ViewController.swift */; };
 		073FA4E42050FB0400168DA5 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 073FA4E22050FB0400168DA5 /* Main.storyboard */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		07089B502053E6440080E10C /* TodoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoPicker.swift; sourceTree = "<group>"; };
 		073FA4DB2050FB0400168DA5 /* TimePie.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimePie.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		073FA4DE2050FB0400168DA5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		073FA4E02050FB0400168DA5 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -64,6 +66,7 @@
 			children = (
 				073FA4DE2050FB0400168DA5 /* AppDelegate.swift */,
 				073FA4E02050FB0400168DA5 /* ViewController.swift */,
+				07089B502053E6440080E10C /* TodoPicker.swift */,
 				073FA4F320512F6000168DA5 /* Action.swift */,
 				073FA4F52051329700168DA5 /* ActionList.swift */,
 				073FA4E22050FB0400168DA5 /* Main.storyboard */,
@@ -154,6 +157,7 @@
 				073FA4E12050FB0400168DA5 /* ViewController.swift in Sources */,
 				073FA4F62051329700168DA5 /* ActionList.swift in Sources */,
 				073FA4DF2050FB0400168DA5 /* AppDelegate.swift in Sources */,
+				07089B512053E6440080E10C /* TodoPicker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
