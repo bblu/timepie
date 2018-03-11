@@ -10,26 +10,30 @@ import UIKit
 
 class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelegate {
     //------------------------------------------------------------------------------
-    @IBOutlet weak var curText: UITextField!
     @IBOutlet weak var curLabel: UILabel!
     let inputMode = 1
     var picker = UIPickerView()
     //------------------------------------------------------------------------------
     //*UIPickerViewDataSource
-    var data:[Int:String] = [:]
-    let comNum = [0:7,1:4]
+    var data:[Int:TodoItem] = [:]
+    var comNums = [Int]()
     public func numberOfComponents(in pickerView: UIPickerView) -> Int{
-        print("returns the number of 'columns[2]' to display")
+        //print("returns the number of 'columns[2]' to display")
         return 2
     }
     public func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int{
-        print("returns the number[\(comNum[component]!)] of rows in each component[\(component)]")
-        return comNum[component]!
+        //print("returns the number of rows in each component[\(component)]")
+        if component == 0 {
+            return comNums.count
+        }
+        let select0 = picker.selectedRow(inComponent: 0)
+        print("returns the number\(comNums[select0]) of rows in each component[\(component)]")
+        return comNums[select0]
     }
     // UIPickerViewDelegate
     public func pickerView(_ pickerView: UIPickerView, widthForComponent component: Int) -> CGFloat{
         //print("returns width of row for each component")
-        return 100
+        return 150
     }
     public func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat{
         //print("returns height of row for each component")
@@ -42,26 +46,31 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     public func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String?{
         let select0 = picker.selectedRow(inComponent: 0)
         if component == 0{
-            print("pickerView.delegate.titleForRow0[select0=\(select0),com=\(component),row=\(row),index=\((row + 1) * 10)]")
-            return data[(row + 1) * 10]
+            //print("pickerView.delegate.titleForRow0[select0=\(select0),com=\(component),row=\(row),index=\((row + 1) * 10)]")
+            return getLabel(index:row * 100)
         }
-        let idx = (select0 + 1) * 10 + component * row
-        print("pickerView.delegate.titleForRow1[select0=\(select0),com=\(component),row=\(row),index=\(idx)]")
-        return data[idx]
+        let index = select0 * 100 + row
+        //print("pickerView.delegate.titleForRow1[select0=\(select0),com=\(component),row=\(row),index=\(idx)]")
+        return getLabel(index:index)
     }
     //public func pickerView(_ pickerView: UIPickerView, attributedTitleForRow row: Int, forComponent component: Int) -> NSAttributedString?
     // attributed title is favored if both methods are implemented
     //public func pickerView(_ pickerView: UIPickerView, viewForRow row: Int, forComponent component: Int, reusing view: UIView?) -> UIView
     
     public func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int){
+        let select0 = picker.selectedRow(inComponent: 0)
+        var index = select0 * 100 + component * row
         if(component==0){
             picker.reloadComponent(1)
+            picker.selectRow(1, inComponent: 1, animated: true)
+            index += 1
         }
-        let select0 = picker.selectedRow(inComponent: 0)
-        let idx = (select0 + 1) * 10 + component * row
-        print("pickerView.delegate.didSelectRow[select0=\(select0),com=\(component),row=\(row)],index=\(idx)")
-
-        curLabel.text = data[idx]
+        print("pickerView.delegate.didSelectRow[select0=\(select0),com=\(component),row=\(row)],index=\(index)")
+        curLabel.text = "current is " + getLabel(index:index)
+    }
+    
+    func getLabel(index:Int)-> String{
+        return data[index]!.icon + data[index]!.name
     }
     
     override func viewDidLoad() {
@@ -84,7 +93,6 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 if inputMode == 0 {
                     addButtons(items: todoConfig.items)
                 }else{
-                    print("addPicker...")
                     addPickerView(items: todoConfig.items)
                 }
             } catch {
@@ -94,28 +102,33 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     func addPickerView(items:[TodoItem]){
         for item in items{
-            data[item.code] = item.alias
-            print("\(item.code) : \(item.alias)")
+            if item.code % 100 == 0{
+                //print("init comNumbers for \(item.code)")
+                comNums.append(1)
+            }else{
+                comNums[item.code/100] += 1
+            }
+            data[item.code] = item
+            //print("\(item.code) : \(item.alias) and count=\(comNums[item.code/100])")
         }
         //let dsDelegate = TodoPickerDsDelegate(items:items)
         picker.dataSource = self
         picker.delegate = self
         picker.center = self.view.center
         self.view.addSubview(picker)
-        //picker.reloadAllComponents()
-        print("...addPicker")
+        picker.selectRow(1, inComponent: 1, animated: true)
     }
     func addButtons(items:[TodoItem]){
         for item in items{
             let pos = item.code
             //pos: 10,11,12,13,14
             //     20,21,22,23,24
-            let px = (pos % 10) * 80
-            let py = 400 + (pos / 10) * 50
+            let px = (pos % 100) * 80
+            let py = 400 + (pos / 100) * 50
             let btnItem = UIButton(frame: CGRect(x:px, y: py, width: 80, height: 30))
             //btnItem.addTarget(self, action: Selector("clickItem"), for: UIControlEvents.touchUpInside)
             btnItem.translatesAutoresizingMaskIntoConstraints = false
-            btnItem.setTitle(item.alias, for: UIControlState.normal)
+            btnItem.setTitle(item.icon+item.alias, for: UIControlState.normal)
             btnItem.setTitleColor(UIColor.blue, for: UIControlState.normal)
             //btnItem.backgroundColor = UIColor.lightGray
             // btnItem.addTarget(self, action: Selector("clickItem"), for: UIControlEvents.touchUpInside)
@@ -125,7 +138,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     func clickItem(_ sender: UIButton) {
         let action = sender.titleLabel?.text!
-        curLabel.text = "CurrentAction: \(action!)"
+        curLabel.text = "current is: \(action!)"
         
     }
 }

@@ -1,7 +1,7 @@
 //
 //  TodoPicker.swift
 //  TimePie
-//
+//  not used by now
 //  Created by lu wenbo on 10/03/2018.
 //  Copyright © 2018 lu wenbo. All rights reserved.
 //
@@ -46,7 +46,7 @@ class TodoPickerDsDelegate:NSObject,UIPickerViewDataSource,UIPickerViewDelegate
     public func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String?{
         print("pickerView.titleForRow.delegate")
         let idx = component * 10 + row
-        return "data[idx]"
+        return data[idx]
     }
     
     //public func pickerView(_ pickerView: UIPickerView, attributedTitleForRow row: Int, forComponent component: Int) -> NSAttributedString?
