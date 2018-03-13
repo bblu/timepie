@@ -8,6 +8,12 @@
 
 import Foundation
 
+struct UserInfoKeys{
+    static let todoCode = "code"
+    static let startTime = "start"
+    static let lastCode = "last"
+}
+
 struct TodoConfig:Decodable{
     let user:String
     let date:String

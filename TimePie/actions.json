@@ -36,7 +36,7 @@
              {"name": "taxi","alias":"汽车","icon":"🚗","code":403,"span":20},
              {"name": "train","alias":"火车","icon":"🚄","code":404,"span":30},
              {"name": "air","alias":"飞机","icon":"✈️","code":405,"span":60},
-             {"name": "ship","alias":"轮船","icon":"🚢","code":405,"span":60},
+             {"name": "ship","alias":"轮船","icon":"🚢","code":406,"span":60},
              
              {"name": "personal","alias":"个人","icon":"👤","code":500,"span":480},
              {"name": "sleep","alias":"睡觉","icon":"🛌","code":501,"span":480},
@@ -48,7 +48,11 @@
              {"name": "diy","alias":"制作","icon":"🛠","code":601,"span":60},
              {"name": "advd","alias":"影音","icon":"🎧","code":602,"span":20},
              {"name": "news","alias":"资讯","icon":"📰","code":603,"span":30},
-             {"name": "tour","alias":"出游","icon":"🎡","code":604,"span":480}
+             {"name": "tour","alias":"出游","icon":"🎡","code":604,"span":480},
+             
+             {"name": "whatever","alias":"随便","icon":"🕐","code":700,"span":480},
+             {"name": "unknown","alias":"未指定","icon":"⚫️","code":701,"span":480}
+             
     ]
 
 }
