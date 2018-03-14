@@ -15,10 +15,12 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     let inputMode = 1
     var picker = UIPickerView()
     var timer = Timer()
-    var tmCounter = 0
+    var tmCounter:UInt64 = 0
     let tdPerfix = ""
     let usrInfo = UserDefaults.standard
     var lastStart = DispatchTime.now()
+    var weakup = false
+    var curCode:Int = 0
     //---------------------------------------------------------------------
     //*UIPickerViewDataSource
     var data:[Int:TodoItem] = [:]
@@ -34,7 +36,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             return comNums.count
         }
         let select0 = picker.selectedRow(inComponent: 0)
-        //print("returns the number\(comNums[select0]) of rows in each component[\(component)]")
+        print("returns the comNums[\(select0)]=\(comNums[select0]) of rows in component[\(component)]")
         return comNums[select0]
     }
     // UIPickerViewDelegate
@@ -53,11 +55,14 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     public func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String?{
         let select0 = picker.selectedRow(inComponent: 0)
         if component == 0{
-            //print("pickerView.delegate.titleForRow0[select0=\(select0),com=\(component),row=\(row),index=\((row + 1) * 10)]")
+            //print("titleForRow0[select0=\(select0),com=\(component),row=\(row),index=\(row * 100)]")
             return getLabel(index:row * 100)
         }
+        if row == 4 {
+            print("error code")
+        }
         let index = select0 * 100 + row
-        //print("pickerView.delegate.titleForRow1[select0=\(select0),com=\(component),row=\(row),index=\(idx)]")
+        print("|---titleForRow1[select0=\(select0),com=\(component),row=\(row),index=\(index)]")
         return getLabel(index:index)
     }
     //public func pickerView(_ pickerView: UIPickerView, attributedTitleForRow row: Int, forComponent component: Int) -> NSAttributedString?
@@ -66,16 +71,17 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     public func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int){
         let select0 = picker.selectedRow(inComponent: 0)
-        var index = select0 * 100 + component * row
+        var code = select0 * 100 + component * row
         if(component==0){
             picker.reloadComponent(1)
             picker.selectRow(1, inComponent: 1, animated: true)
-            index += 1
+            code += 1
+            print("Code+1=\(code)")
         }
-        //print("pickerView.delegate.didSelectRow[select0=\(select0),com=\(component),row=\(row)],index=\(index)")
-        tdLabel = getLabel(index: index)
+        print("didSelectRow[select0=\(select0),com=\(component),row=\(row)],index=\(code)")
+        tdLabel = getLabel(index: code)
         curLabel.text = tdPerfix + tdLabel
-        selectTodo(item:data[index]!)
+        selectTodo(item:data[code]!)
     }
     
     func getLabel(index:Int)-> String{
@@ -106,17 +112,29 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                                              userInfo: nil, repeats: true)
                 //timer.invalidate()
                 let tmStart = usrInfo.integer(forKey: UserInfoKeys.startTime)
-                let curItem = usrInfo.integer(forKey: UserInfoKeys.todoCode)
-                startLabel.text = "\(curItem),\(tmStart)"
+                let end = DispatchTime.now()
+                let span = end.uptimeNanoseconds - UInt64(tmStart)
+                let timeInterval = Double(span) / 1_000_000_000
+                tmCounter = UInt64(timeInterval)
+
+                curCode = usrInfo.integer(forKey: UserInfoKeys.todoCode)
+                print("startTime:\(tmStart),span=\(span),code=\(curCode)")
+                
                 if inputMode == 0 {
                     addButtons(items: todoConfig.items)
                 }else{
                     addPickerView(items: todoConfig.items)
-                    print("\(curItem),i0=\(curItem/100),%1=\(curItem%100)")
-                    picker.selectRow(curItem/100, inComponent: 0, animated: true)
-                    picker.selectRow(curItem%100, inComponent: 1, animated: true)
+                    print("curCode=\(curCode),com0=\(curCode/100),com1=\(curCode%100)")
+                    //if code==103 will cause a picker init fault for wrong component numberrows
+                    picker.selectRow(0, inComponent: 0, animated: false)
+                    picker.selectRow(curCode/100, inComponent: 0, animated: false)
+                    picker.selectRow(1, inComponent: 1, animated: false)
+                    //picker.selectRow(curCode%100, inComponent: 1, animated: true)
+                    
+                    tdLabel = getLabel(index: curCode)
+                    startLabel.text = "\(curCode),\(tmStart)"
                 }
-                
+                weakup = true
                 
             } catch {
                 print("error:\(error)")                // handle error
@@ -165,27 +183,34 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         
     }
     func selectTodo(item:TodoItem){
-        let start = DispatchTime.now()
-        let span = lastStart - start.uptimeNanoseconds
-        let nanoTime = end.uptimeNanoseconds - start.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
-        lastStart = start
-        print("start:\(start),span=\(span)")
         let end = DispatchTime.now()
-        
+        let nanoTime = end.uptimeNanoseconds - lastStart.uptimeNanoseconds // <<<<< Difference in nano seconds (UInt64)
         let timeInterval = Double(nanoTime) / 1_000_000_000 // Technically could overflow for long running tests
-        print("code:\(item.code),start:end:\(end) => \(timeInterval)")
-        usrInfo.set(item.code, forKey: UserInfoKeys.todoCode)
-        usrInfo.set(start.uptimeNanoseconds, forKey: UserInfoKeys.startTime)
-        startLabel.text = "\(item.code),span:\(span)"
+        print("code:\(item.code),span => \(timeInterval)")
+        curCode = item.code
+        usrInfo.set(curCode, forKey: UserInfoKeys.todoCode)
+        usrInfo.set(end.uptimeNanoseconds, forKey: UserInfoKeys.startTime)
+        startLabel.text = "\(item.code),span:\(timeInterval)"
+        lastStart = end
+        tmCounter = 0
     }
     
     @objc func UpdateTimer(){
         tmCounter += 1
-        let end = DispatchTime.now()
-        
-        
-        String(format: "%02d:%02d:%02d", hours, minutes, seconds)
-        curLabel.text = tdPerfix + tdLabel + String(format: " for %ds",tmCounter)
+        if tmCounter == 30 {
+            //picker.selectRow(curCode%100, inComponent: 1, animated: true)
+            weakup = false
+        }
+        let hours = tmCounter / 3600
+        let minutes = (tmCounter - hours*3600)/60
+        if tmCounter >= 3600{
+            let lblTime = String(format: "%02d:%02d", hours, minutes)
+            curLabel.text = tdPerfix + tdLabel + " for " + lblTime
+        }else{
+            let seconds = tmCounter % 60
+            let lblTime = String(format: "%2d:%02d", minutes, seconds)
+            curLabel.text = tdPerfix + tdLabel + " for " + lblTime
+        }
     }
 }
 
