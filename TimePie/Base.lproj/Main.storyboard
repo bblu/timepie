@@ -27,6 +27,7 @@
                                     <segment title="Today"/>
                                 </segments>
                                 <connections>
+                                    <action selector="changeSpan:" destination="BYZ-38-t0r" eventType="valueChanged" id="a6y-XP-0gh"/>
                                     <action selector="timeSpan:" destination="BYZ-38-t0r" eventType="valueChanged" id="JJ9-N3-dfD"/>
                                 </connections>
                             </segmentedControl>

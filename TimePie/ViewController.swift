@@ -58,10 +58,11 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             //print("titleForRow0[select0=\(select0),com=\(component),row=\(row),index=\(row * 100)]")
             return getLabel(index:row * 100)
         }
-        if row == 4 {
-            print("error code")
+        var index = select0 * 100 + row
+        if index == 105{
+            index = 104
+            print(" ---***--- error code 105")
         }
-        let index = select0 * 100 + row
         print("|---titleForRow1[select0=\(select0),com=\(component),row=\(row),index=\(index)]")
         return getLabel(index:index)
     }
@@ -101,6 +102,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     @IBAction func add2Actions(_ sender: UIButton) {
     }
+    
+    @IBAction func changeSpan(_ sender: Any) {
+    }
     func initInputCtrl(){
         if let path = Bundle.main.path(forResource: "actions", ofType: "json") {
             do {
@@ -118,7 +122,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 tmCounter = UInt64(timeInterval)
 
                 curCode = usrInfo.integer(forKey: UserInfoKeys.todoCode)
-                print("startTime:\(tmStart),span=\(span),code=\(curCode)")
+                print("startTime:\(tmStart),timeInterval=\(timeInterval),code=\(curCode)")
                 
                 if inputMode == 0 {
                     addButtons(items: todoConfig.items)
@@ -128,11 +132,10 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                     //if code==103 will cause a picker init fault for wrong component numberrows
                     picker.selectRow(0, inComponent: 0, animated: false)
                     picker.selectRow(curCode/100, inComponent: 0, animated: false)
-                    picker.selectRow(1, inComponent: 1, animated: false)
                     //picker.selectRow(curCode%100, inComponent: 1, animated: true)
                     
                     tdLabel = getLabel(index: curCode)
-                    startLabel.text = "\(curCode),\(tmStart)"
+                    startLabel.text = "\(curCode),span\(timeInterval)"
                 }
                 weakup = true
                 
