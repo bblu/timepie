@@ -49,7 +49,7 @@ class SqliteUtil{
         
         if sqlite3_bind_int(stmt, 1, Int32(item.code)) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
-            print("failure binding name: \(errmsg)")
+            print("failure binding code: \(errmsg)")
             return
         }
         
@@ -60,19 +60,19 @@ class SqliteUtil{
         }
         if sqlite3_bind_int(stmt, 3, Int32(start)) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
-            print("failure binding name: \(errmsg)")
+            print("failure binding start: \(errmsg)")
             return
         }
         
         if sqlite3_bind_int(stmt, 4, Int32(span)) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
-            print("failure binding name: \(errmsg)")
+            print("failure binding span: \(errmsg)")
             return
         }
         
         if sqlite3_step(stmt) != SQLITE_DONE {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
-            print("failure inserting hero: \(errmsg)")
+            print("failure inserting todo: \(errmsg)")
             return
         }
         print("itme saved successfully")
@@ -93,14 +93,45 @@ class SqliteUtil{
         var a = 0
         //traversing through all the records
         while(sqlite3_step(stmt) == SQLITE_ROW){
-            let code = sqlite3_column_int(stmt, 0)
-            let name = String(cString: sqlite3_column_text(stmt, 1))
-            let start = sqlite3_column_int(stmt, 2)
+            //let code = sqlite3_column_int(stmt, 0)
+            //let name = String(cString: sqlite3_column_text(stmt, 1))
+            //let start = sqlite3_column_int(stmt, 2)
             a += 1
         }
         return a
     }
-    
+    func backupData() ->Int {
+        
+        // server endpoint
+        let endpoint = "http://bblu.tk/timepie"
+        
+        guard let endpointUrl = URL(string: endpoint) else {
+            return -1
+        }
+        var count = 0
+        //Make JSON to send to send to server
+        var json = [String:Any]()
+        
+        json["id"] = 0
+        json["name"] = "sleep"
+        
+        do {
+            let data = try JSONSerialization.data(withJSONObject: json, options: [])
+            
+            var request = URLRequest(url: endpointUrl)
+            request.httpMethod = "POST"
+            request.httpBody = data
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.addValue("application/json", forHTTPHeaderField: "Accept")
+            
+            let task = URLSession.shared.dataTask(with: request)
+            task.resume()
+            count += 1
+        }catch{
+            return count
+        }
+        return count
+    }
 
 
 }

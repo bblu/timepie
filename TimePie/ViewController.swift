@@ -21,11 +21,12 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     let usrInfo = UserDefaults.standard
     var lastStart:Int = Date().timeIntervalSince1970.exponent
     var weakup = false
-    var curCode:Int = 0
+    var currCode:Int = 0
+    var lastCode:Int = 0
     let db = SqliteUtil.timePie
     //---------------------------------------------------------------------
     //*UIPickerViewDataSource
-    var data:[Int:TodoItem] = [:]
+    var tdData:[Int:TodoItem] = [:]
     var comNums = [Int]()
     var tdLabel = ""
     public func numberOfComponents(in pickerView: UIPickerView) -> Int{
@@ -38,7 +39,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             return comNums.count
         }
         let select0 = picker.selectedRow(inComponent: 0)
-        //print("returns the comNums[\(select0)]=\(comNums[select0]) of rows in component[\(component)]")
+        if select0 == 6{
+            print("returns the comNums[\(select0)]=\(comNums[select0]) of rows in component[\(component)]")
+        }
         return comNums[select0]
     }
     // UIPickerViewDelegate
@@ -55,15 +58,16 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     // for the view versions, we cache any hidden and thus unused views and pass them back for reuse.
     // If you return back a different object, the old one will be released. the view will be centered in the row rect
     public func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String?{
-        let select0 = picker.selectedRow(inComponent: 0)
+        
         if component == 0{
             //print("titleForRow0[select0=\(select0),com=\(component),row=\(row),index=\(row * 100)]")
             return getLabel(index:row * 100)
         }
+        let select0 = picker.selectedRow(inComponent: 0)
         var index = select0 * 100 + row
-        if index == 105{
-            index = 104
-            print(" ---***--- error code 105")
+        if (index == 105 || index == 505 || index == 605){
+            index -= 1
+            print(" ---***--- error code \(index)")
         }
 //        print("|---titleForRow1[select0=\(select0),com=\(component),row=\(row),index=\(index)]")
         return getLabel(index:index)
@@ -84,11 +88,11 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         print("didSelectRow[select0=\(select0),com=\(component),row=\(row)],index=\(code)")
         tdLabel = getLabel(index: code)
         curLabel.text = tdPerfix + tdLabel
-        selectTodo(item:data[code]!)
+        selectTodo(item:tdData[code]!)
     }
     
     func getLabel(index:Int)-> String{
-        return data[index]!.icon + data[index]!.name
+        return tdData[index]!.icon + tdData[index]!.name
     }
     
     override func viewDidLoad() {
@@ -107,6 +111,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     @IBAction func changeSpan(_ sender: Any) {
     }
+    
+    @IBAction func backupData(_ sender: Any) {
+    }
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     func initInputCtrl(){
         
@@ -121,8 +128,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 //timer.invalidate()
                 lastStart = usrInfo.integer(forKey: UserInfoKeys.startTime)
                 tmCounter = Int(Date().timeIntervalSince1970) - lastStart
-                curCode = usrInfo.integer(forKey: UserInfoKeys.todoCode)
-                print("last:\(lastStart),byNow=\(tmCounter),code=\(curCode)")
+                currCode = usrInfo.integer(forKey: UserInfoKeys.todoCode)
+                lastCode = usrInfo.integer(forKey: UserInfoKeys.lastCode)
+                print("last:\(lastStart),byNow=\(tmCounter),code=\(currCode)")
                 //---------database------------
                 let count = db.getItem()
                 print("count = \(count)")
@@ -131,12 +139,12 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                     addButtons(items: todoConfig.items)
                 }else{
                     addPickerView(items: todoConfig.items)
-                    print("curCode=\(curCode),com0=\(curCode/100),com1=\(curCode%100)")
+                    print("curCode=\(currCode),com0=\(currCode/100),com1=\(currCode%100)")
                     //if code==103 will cause a picker init fault for wrong component numberrows
-                    picker.selectRow(curCode/100, inComponent: 0, animated: false)
-                    picker.selectRow(curCode%100, inComponent: 1, animated: true)
-                    tdLabel = getLabel(index: curCode)
-                    startLabel.text = "\(curCode),span\(tmCounter)"
+                    picker.selectRow(currCode/100, inComponent: 0, animated: false)
+                    picker.selectRow(currCode%100, inComponent: 1, animated: true)
+                    tdLabel = getLabel(index: currCode)
+                    startLabel.text = "\(tdData[lastCode]!.alias):\(formateTime(interval: tmCounter))"
                 }
                 weakup = true
                 
@@ -148,13 +156,16 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     func addPickerView(items:[TodoItem]){
         for item in items{
             if item.code % 100 == 0{
-                //print("init comNumbers for \(item.code)")
+                print("init comNumbers for \(item.code)")
                 comNums.append(1)
             }else{
                 comNums[item.code/100] += 1
             }
-            data[item.code] = item
+            tdData[item.code] = item
             //print("\(item.code) : \(item.alias) and count=\(comNums[item.code/100])")
+        }
+        for i in comNums{
+            print("\(i)")
         }
         //let dsDelegate = TodoPickerDsDelegate(items:items)
         picker.dataSource = self
@@ -189,28 +200,33 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     func selectTodo(item:TodoItem){
         let now = Int(Date().timeIntervalSince1970)
         let span = now - lastStart
-        print("code:\(item.code),start\(lastStart),now\(now),span => \(span)")
-        startLabel.text = "\(item.code),span:\(span)"
-        db.insert(item: item, start: lastStart, span: span)
+        //only store the item which is longer than a minute
+        if span > 60 {
+            db.insert(item: item, start: lastStart, span: span)
+        }
         lastStart = now
-        curCode = item.code
-        usrInfo.set(curCode, forKey: UserInfoKeys.todoCode)
+        lastCode = currCode
+        print("code:\(tdData[lastCode]!.alias),start\(lastStart),now\(now),span => \(span)")
+        startLabel.text = "\(lastCode):\(tdData[lastCode]!.name):\(formateTime(interval: span))"
+        currCode = item.code
+        usrInfo.set(currCode, forKey: UserInfoKeys.todoCode)
         usrInfo.set(lastStart, forKey: UserInfoKeys.startTime)
         tmCounter = 0
     }
     
     @objc func UpdateTimer(){
         tmCounter += 1
-        let hours = tmCounter / 3600
-        let minutes = (tmCounter - hours*3600)/60
-        if tmCounter >= 3600{
-            let lblTime = String(format: "%02d:%02d", hours, minutes)
-            curLabel.text = tdPerfix + tdLabel + " for " + lblTime
-        }else{
-            let seconds = tmCounter % 60
-            let lblTime = String(format: "%2d:%02d", minutes, seconds)
-            curLabel.text = tdPerfix + tdLabel + " for " + lblTime
-        }
+        curLabel.text = tdPerfix + tdLabel + " for " + formateTime(interval:tmCounter)
     }
+    func formateTime(interval:Int)->String{
+        let hours = interval / 3600
+        let minutes = (interval - hours*3600)/60
+        if interval >= 3600{
+            return String(format: "%02d:%02d", hours, minutes)
+        }
+        let seconds = interval % 60
+        return String(format: "%2d:%02d", minutes, seconds)
+    }
+    
 }
 
