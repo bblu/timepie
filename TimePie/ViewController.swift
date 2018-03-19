@@ -23,6 +23,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     var weakup = false
     var currCode:Int = 0
     var lastCode:Int = 0
+    var notAvailable:Bool = false
     let db = SqliteUtil.timePie
     //---------------------------------------------------------------------
     //*UIPickerViewDataSource
@@ -113,6 +114,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     
     @IBAction func backupData(_ sender: Any) {
+        let c = db.backupData()
+        print("bkup count = \(c)")
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     func initInputCtrl(){
@@ -127,6 +130,10 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                                              userInfo: nil, repeats: true)
                 //timer.invalidate()
                 lastStart = usrInfo.integer(forKey: UserInfoKeys.startTime)
+                if lastStart == 0 {
+                    // for the first time to setup
+                    lastStart = Int(Date().timeIntervalSince1970)
+                }
                 tmCounter = Int(Date().timeIntervalSince1970) - lastStart
                 currCode = usrInfo.integer(forKey: UserInfoKeys.todoCode)
                 lastCode = usrInfo.integer(forKey: UserInfoKeys.lastCode)
@@ -201,13 +208,15 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         let now = Int(Date().timeIntervalSince1970)
         let span = now - lastStart
         //only store the item which is longer than a minute
-        if span > 60 {
+        if span > 30 {
             db.insert(item: item, start: lastStart, span: span)
+            lastStart = now
+            lastCode = currCode
+            print("code:\(tdData[lastCode]!.alias),start\(lastStart),now\(now),span => \(span)")
+            startLabel.text = "\(lastCode):\(tdData[lastCode]!.name):\(formateTime(interval: span))"
+        }else{
+            notAvailable = true
         }
-        lastStart = now
-        lastCode = currCode
-        print("code:\(tdData[lastCode]!.alias),start\(lastStart),now\(now),span => \(span)")
-        startLabel.text = "\(lastCode):\(tdData[lastCode]!.name):\(formateTime(interval: span))"
         currCode = item.code
         usrInfo.set(currCode, forKey: UserInfoKeys.todoCode)
         usrInfo.set(lastStart, forKey: UserInfoKeys.startTime)
@@ -215,6 +224,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     
     @objc func UpdateTimer(){
+        if notAvailable{
+            notAvailable = false
+        }
         tmCounter += 1
         curLabel.text = tdPerfix + tdLabel + " for " + formateTime(interval:tmCounter)
     }

@@ -34,7 +34,8 @@ var doneSchema = mongoose.Schema({
 var model = {
 	// 在此处扩展 model，例如：
 	// Article: mongoose.model('Article', articleSchema),
-	User: mongoose.model('User', userSchema)
+	User: mongoose.model('User', userSchema),
+	Done: mongoose.model('Done',doneSchema)
 }
 
 module.exports = model

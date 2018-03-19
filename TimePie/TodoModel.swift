@@ -1,5 +1,5 @@
 //
-//  Action.swift
+//  DoneTodo.swift
 //  TimePie
 //
 //  Created by lu wenbo on 08/03/2018.
@@ -28,13 +28,19 @@ struct TodoItem: Decodable{
     var span:Int
 }
 
-struct Action {
-    var code:Int        // 3digits support for two steps of actions
-    var name:String
-    var alias:String
-    var desc:String
-    var span0:Int       // plan time,todo and action can use one attr
-    var span1:Int       // real time for this action
-    var value0:Int      // begin
-    var value1:Int      // end
+struct DoneList: Encodable{
+    let items:[DoneItem]
+}
+
+struct DoneItem: Encodable{
+    let id:Int
+    let code:Int      // 3digits support for two steps of actions
+    let star:Int      // begin
+    let stop:Int      // end
+    let span:Int      // real time for this action
+    let spnd:Float
+    let name:String
+    let alia:String
+    let desc:String
+    let user:String = "iphone"
 }

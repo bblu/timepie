@@ -77,58 +77,65 @@ class SqliteUtil{
         }
         print("itme saved successfully")
     }
-    func getItem()->Int{
+    func getItem()->[DoneItem]{
         //this is our select query
         let queryString = "SELECT * FROM Done"
         
         //statement pointer
         var stmt:OpaquePointer?
-        
+        var doneList = [DoneItem]()
         //preparing the query
         if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             print("error preparing insert: \(errmsg)")
-            return 0
+            return doneList
         }
         var a = 0
+        
         //traversing through all the records
+        //code, name, start,end,span
+        //print("sqlite3_step(stmt)=\(sqlite3_step(stmt))")
         while(sqlite3_step(stmt) == SQLITE_ROW){
-            //let code = sqlite3_column_int(stmt, 0)
-            //let name = String(cString: sqlite3_column_text(stmt, 1))
-            //let start = sqlite3_column_int(stmt, 2)
+            let id = Int(sqlite3_column_int(stmt, 0))
+            let code = Int(sqlite3_column_int(stmt, 1))
+            let name = String(cString: sqlite3_column_text(stmt, 2))
+            let start = Int(sqlite3_column_int(stmt, 3))
+            let stop = Int(sqlite3_column_int(stmt, 4))
+            let span = Int(sqlite3_column_int(stmt, 5))
+            //print("[\(id)]:c:\(code),n:\(name),s:\(start),e:\(stop),span:\(span)")
+            let d = DoneItem(id:id, code:code, star:start, stop:stop,span:span,spnd:0.0, name:name, alia:"alia", desc: "desc")
+            
+            print("[\(d.id)]:c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
+            doneList.append(d)
             a += 1
         }
-        return a
+        return doneList
     }
     func backupData() ->Int {
-        
         // server endpoint
-        let endpoint = "http://bblu.tk/timepie"
+        let endpoint = "http://169.254.235.113:8008/timepie/done"
         
         guard let endpointUrl = URL(string: endpoint) else {
             return -1
         }
         var count = 0
         //Make JSON to send to send to server
-        var json = [String:Any]()
-        
-        json["id"] = 0
-        json["name"] = "sleep"
-        
-        do {
-            let data = try JSONSerialization.data(withJSONObject: json, options: [])
-            
+        let encoder = JSONEncoder()
+        //let todoConfig = try decoder.decode(TodoConfig.self, from: data)
+        do{
+            let list = getItem()
+            count = list.count
+            let json = try encoder.encode(list)
+            print("donejs=\(json)")
             var request = URLRequest(url: endpointUrl)
             request.httpMethod = "POST"
-            request.httpBody = data
+            request.httpBody = json
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
             request.addValue("application/json", forHTTPHeaderField: "Accept")
-            
             let task = URLSession.shared.dataTask(with: request)
             task.resume()
-            count += 1
-        }catch{
-            return count
+        }catch {
+            print("error:\(error)")                // handle error
         }
         return count
     }

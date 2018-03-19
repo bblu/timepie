@@ -17,9 +17,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(compression({ threshold: 0 }));
-app.use('/',)
 app.use('/user', userRoutes);
-app.use('/done', doneRoutes);
+app.use('/timepie', doneRoutes);
 
 app.use(function (req, res, next) {
 	var err = new Error('This page not found');
