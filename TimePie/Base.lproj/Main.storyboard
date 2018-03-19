@@ -18,9 +18,8 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <segmentedControl opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="2" translatesAutoresizingMaskIntoConstraints="NO" id="PAi-53-Sgm">
-                                <rect key="frame" x="16" y="70" width="343" height="29"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="2" translatesAutoresizingMaskIntoConstraints="NO" id="PAi-53-Sgm">
+                                <rect key="frame" x="16" y="73" width="343" height="29"/>
                                 <segments>
                                     <segment title="Month"/>
                                     <segment title="Week"/>
@@ -30,13 +29,6 @@
                                     <action selector="changeSpan:" destination="BYZ-38-t0r" eventType="valueChanged" id="a6y-XP-0gh"/>
                                 </connections>
                             </segmentedControl>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Master your time from mesure it!" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yia-BI-uC9">
-                                <rect key="frame" x="16" y="20" width="343" height="29"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="24"/>
-                                <nil key="textColor"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="current is:👨🏻‍💻coding" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0Xg-zl-bdP">
                                 <rect key="frame" x="16" y="107" width="287" height="48"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -68,8 +60,26 @@
                                     <action selector="backupData:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ADu-KW-PBn"/>
                                 </connections>
                             </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Measure time before you master it!" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yia-BI-uC9">
+                                <rect key="frame" x="10" y="36" width="356" height="29"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="24"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="yia-BI-uC9" secondAttribute="trailing" constant="9" id="CUm-tA-Z5p"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="PAi-53-Sgm" secondAttribute="trailing" constant="16" id="JYC-Ix-wvq"/>
+                            <constraint firstItem="PAi-53-Sgm" firstAttribute="top" secondItem="yia-BI-uC9" secondAttribute="bottom" constant="8" symbolic="YES" id="QMb-mg-gHA"/>
+                            <constraint firstItem="yia-BI-uC9" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="16" id="T15-kh-IOO"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="yia-BI-uC9" secondAttribute="trailing" constant="9" id="VcZ-zs-fIU"/>
+                            <constraint firstItem="yia-BI-uC9" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="10" id="fgh-vT-49q"/>
+                            <constraint firstItem="PAi-53-Sgm" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="16" id="lwt-rz-0mg"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="PAi-53-Sgm" secondAttribute="trailing" constant="16" id="qL9-xL-vE1"/>
+                            <constraint firstItem="PAi-53-Sgm" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="16" id="u5A-Kf-LZn"/>
+                            <constraint firstItem="yia-BI-uC9" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="10" id="zMf-bM-EhH"/>
+                        </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <connections>
