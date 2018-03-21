@@ -20,15 +20,16 @@ var userSchema = mongoose.Schema({
 })
 
 var doneSchema = mongoose.Schema({
-	id: Number,
-	code: Number,
-	name: String,
-	aliase: String,
-	start: Date,
-	end: Date,
+	id: {type:Number,index:true},
+	code: {type:Number,index:true},
+	star: Number,
+	stop: Number,
 	span: Number,
-	money:Number,
-	comment: String
+	spnd: Number,
+	name: String,
+	alia: String,
+	desc: String,
+	user: String
 })
 
 var model = {

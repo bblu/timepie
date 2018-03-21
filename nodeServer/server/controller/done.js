@@ -8,7 +8,7 @@ const sha1 = require('sha1')
 const checkToken = require('../middleware/checkToken.js')
 
 // 获取数据
-const done = (req, res) => {
+const getDone = (req, res) => {
 	model.Done.find({}, (err, doc) => {
 		if(err) console.log(err)
 		res.send(doc)
@@ -38,6 +38,6 @@ const bkup = (req, res) => {
 
 
 module.exports = (router) => {
-	router.get('/done', done),
+	router.get('/done', getDone),
 	router.post('/done', bkup)
 }
