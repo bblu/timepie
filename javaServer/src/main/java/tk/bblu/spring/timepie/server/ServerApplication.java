@@ -1,12 +1,12 @@
-package bblu.timepieserver;
+package tk.bblu.spring.timepie.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class TimepieserverApplication {
+public class ServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(TimepieserverApplication.class, args);
+		SpringApplication.run(ServerApplication.class, args);
 	}
 }
