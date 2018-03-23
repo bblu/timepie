@@ -14,5 +14,16 @@ public class Done {
     public String alia;
     public String desc;
     public String user;
+    public Done(Integer id,Integer code){
+        this.id = id;
+        this.code = code;
+    }
 
+    public Integer getId() {
+        return id;
+    }
+
+    public Integer getCode() {
+        return code;
+    }
 }
