@@ -12,6 +12,8 @@ struct UserInfoKeys{
     static let todoCode = "code"
     static let startTime = "start"
     static let lastCode = "last"
+    static let lastSpan = "lastSpan"
+    static let doneCount = "count"
 }
 
 struct TodoConfig:Decodable{
@@ -35,12 +37,12 @@ struct DoneList: Encodable{
 struct DoneItem: Encodable{
     let id:Int
     let code:Int      // 3digits support for two steps of actions
+    let name:String
     let star:Int      // begin
     let stop:Int      // end
     let span:Int      // real time for this action
     let spnd:Float
-    let name:String
     let alia:String
     let desc:String
-    let user:String = "iphone"
+    let user:String = "bblu"
 }
