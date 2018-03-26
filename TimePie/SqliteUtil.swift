@@ -73,6 +73,20 @@ class SqliteUtil{
         }
         return "|-[info]-[\(item.code):\(item.name)] for \(Int(Float(span)*0.01666667)+1)mins saved"
     }
+    func getItemCount()->Int{
+        let queryString = "SELECT count(id) FROM Done"
+        //statement pointer
+        var stmt:OpaquePointer?
+        //preparing the query
+        if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            print("error preparing insert: \(errmsg)")
+            return -1
+        }
+        sqlite3_step(stmt)
+        let c = Int(sqlite3_column_int(stmt, 0))
+        return c
+    }
     func getItem()->[DoneItem]{
         //this is our select query
         //
