@@ -15,11 +15,14 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     @IBOutlet weak var lastLabel: UILabel!
     @IBOutlet weak var lastButton: UIButton!
     @IBOutlet weak var spanSlider: UISlider!
+    @IBOutlet weak var cancelEditButton: UIButton!
     @IBOutlet weak var logLabel: UILabel!
-    let inputMode = 1
+    
+    static let localOffset = 28800
     var picker = UIPickerView()
     var timer = Timer()
     var tmCounter:Int = 0
+    let inputMode = 1
     let tdPerfix = ""
     let usrInfo = UserDefaults.standard
     var lastStart:Int = Date().timeIntervalSince1970.exponent
@@ -28,7 +31,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     var lastCode:Int = 0
     var lastSpan:Int = 0
     var doneCount:Int = 0
-    var notAvailable:Bool = false
+ 
     let db = SqliteUtil.timePie
     //---------------------------------------------------------------------
     //*UIPickerViewDataSource
@@ -69,7 +72,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         let select0 = picker.selectedRow(inComponent: 0)
         let index = select0 * 100 + row
         if row >= comNums[select0]{
-            logLabel.text = "unknown index:\(index)"
+            logLabel.text = "|-[error]-index:\(index) for pickerView"
             return ""
         }
 //        print("|---titleForRow1[select0=\(select0),com=\(component),row=\(row),index=\(index)]")
@@ -87,7 +90,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         }
         //print("didSelectRow[select0=\(select0),com=\(component),row=\(row)],index=\(code)")
         tdLabel = getLabel(index: code)
-        curLabel.text = tdPerfix + tdLabel + formateTime(interval: 0)
+        curLabel.text = "\(tdPerfix)\(tdLabel) for 0:00"
         selectTodo(item:tdData[code]!)
     }
 
@@ -107,7 +110,17 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     
     @IBAction func add2Actions(_ sender: UIButton) {
-        //db.clearAll();
+        if doneCount == 0{
+            logLabel.text = "|-[info]-no item to delete"
+            return
+        }
+        let alert = UIAlertController(title: "Alert", message:"Delete All \(doneCount) Items?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "No", style: .`cancel`, handler: nil))
+        alert.addAction(UIAlertAction(title: "Yes", style: .`default`, handler: { _ in
+            self.logLabel.text = self.db.clearAll();
+            self.resetDoneCount()
+        }))
+        self.present(alert, animated: true, completion: nil)
     }
     
     @IBAction func changeSpan(_ sender: Any) {
@@ -116,26 +129,48 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     @IBAction func changeLastSpan(_ sender: UIButton) {
         if spanSlider.isHidden{
-            let maxValue:Float = Float(lastSpan)
+            //start Edit
+            let maxValue:Float = Float(lastSpan)/60
             spanSlider.maximumValue = maxValue * 1.25
             spanSlider.setValue(maxValue, animated: false)
             lastButton.setTitle("💾",for:UIControlState.normal)
         }else{
+            //save Edit
+            let span = Int(spanSlider.value*60)
+            if abs(lastSpan - span) < 180{
+                flushLastLabel()
+                logLabel.text = "|-[info]-time span is too short to store..."
+            }else{
+                
+                logLabel.text = db.updateLastEnd(lastStart: lastStart, newSpan: span)
+            }
             lastButton.setTitle("⚙️",for:UIControlState.normal)
         }
         spanSlider.isHidden = !spanSlider.isHidden
+        cancelEditButton.isHidden = spanSlider.isHidden
     }
-    
+    @IBAction func cancelEditLast(_ sender: UIButton) {
+        flushLastLabel()
+        lastButton.setTitle("⚙️",for:UIControlState.normal)
+        spanSlider.isHidden = true
+        sender.isHidden = true
+    }
     @IBAction func lastSpanSlider(_ sender: UISlider) {
-        let val = lastStart + Int(sender.value)
-        lastLabel.text = "[\(doneCount)]\(tdData[lastCode]!.name):\(formateTime(interval: Int(sender.value))) --> \(formateTime(interval:val))"
+        let val = Int(sender.value*60)
+        let loc = lastStart + val + ViewController.localOffset
+        lastLabel.text = "[\(doneCount)]\(tdData[lastCode]!.name):\(formateTime(interval: val)) -> \(formateTime(interval:loc))"
     }
     
     @IBAction func backupData(_ sender: Any) {
         doneCount = db.backupData()
-        usrInfo.set(doneCount, forKey: UserInfoKeys.doneCount)
-        logLabel.text = "bkup count = \(doneCount)"
-        lastLabel.text = "[\(doneCount)]\(tdData[lastCode]!.alias):\(formateTime(interval: tmCounter))"
+        if doneCount < 0{
+            logLabel.text = "|-[error]-cannot connect to bkup address"
+        }else{
+            usrInfo.set(doneCount, forKey: UserInfoKeys.doneCount)
+            logLabel.text = "|-[info]-bkup count = \(doneCount) span\(lastSpan)|tm\(tmCounter)"
+            //lastSpan = tmCounter
+            flushLastLabel()
+        }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
     func initInputCtrl(){
@@ -148,7 +183,11 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(UpdateTimer),
                                              userInfo: nil, repeats: true)
                 //timer.invalidate()
+                doneCount = usrInfo.integer(forKey: UserInfoKeys.doneCount)
+                lastCode = usrInfo.integer(forKey: UserInfoKeys.lastCode)
+                print("init lastCode=\(lastCode)")
                 lastStart = usrInfo.integer(forKey: UserInfoKeys.startTime)
+                lastSpan = usrInfo.integer(forKey: UserInfoKeys.lastSpan)
                 let intNow = Int(Date().timeIntervalSince1970)
                 if lastStart == 0 || lastStart > intNow {
                     // for the first time to setup
@@ -157,11 +196,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 }
                 tmCounter = intNow - lastStart
                 currCode = usrInfo.integer(forKey: UserInfoKeys.todoCode)
-                lastCode = usrInfo.integer(forKey: UserInfoKeys.lastCode)
-                lastSpan = usrInfo.integer(forKey: UserInfoKeys.lastSpan)
-                doneCount = usrInfo.integer(forKey: UserInfoKeys.doneCount)
-                logLabel.text = "lastCode:\(lastCode),lastSpan:\(lastSpan),byNow=\(tmCounter)"
-                print("lastCode:\(lastCode),lastSpan:\(lastSpan),byNow=\(tmCounter)")
+                logLabel.text = "|-[info]-Done={\(lastCode):\(lastSpan)s} Doing={\(currCode):\(tmCounter)s}|\(logLabel.text!)"
+                //print("lastCode:\(lastCode),lastSpan:\(lastSpan),byNow=\(tmCounter),curSpan=\(tmCounter)")
                 //---------database------------
                 //let count = db.getItem()
                 //print("count = \(count)")
@@ -175,7 +211,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                     picker.selectRow(currCode/100, inComponent: 0, animated: false)
                     picker.selectRow(currCode%100, inComponent: 1, animated: true)
                     tdLabel = getLabel(index: currCode)
-                    lastLabel.text = "[\(doneCount)]\(tdData[lastCode]!.name):\(formateTime(interval: tmCounter))"
+                    flushLastLabel()
                 }
                 weakup = true
                 
@@ -231,43 +267,57 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         let now = Int(Date().timeIntervalSince1970)
         let span = now - lastStart
         //only store the item which is longer than a minute
-        if span > 90 {
-            lastSpan = span
-            logLabel.text = db.insert(item: item, start: lastStart, span: lastSpan,spnd:0)
-            lastStart = now
+        if span > 60 {
+            logLabel.text = db.insert(item: tdData[currCode]!, start: lastStart,
+                                      span: span,spnd:0.0,desc:"")
             lastCode = currCode
-            doneCount += 1
-            //print("code:\(tdData[lastCode]!.alias),start\(lastStart),now\(now),span => \(lastSpan)")
-            lastLabel.text = "[\(doneCount)]\(tdData[lastCode]!.name):\(formateTime(interval: lastSpan))"
+            lastStart = now
+            lastSpan = span
             currCode = item.code
-            usrInfo.set(doneCount, forKey: UserInfoKeys.doneCount)
-            usrInfo.set(currCode, forKey: UserInfoKeys.todoCode)
-            usrInfo.set(lastStart, forKey: UserInfoKeys.startTime)
-            usrInfo.set(lastCode, forKey: UserInfoKeys.lastCode)
-            usrInfo.set(lastSpan, forKey: UserInfoKeys.lastSpan)
-        }else{
-            notAvailable = true
+            increaseDoneCount()
+            storeUserInfo()
         }
         tmCounter = 0
     }
     
     @objc func UpdateTimer(){
-        if notAvailable{
-            notAvailable = false
-        }
         tmCounter += 1
         curLabel.text = tdPerfix + tdLabel + " for " + formateTime(interval:tmCounter)
     }
+    func resetDoneCount(){
+        setDoneCount(count: 0)
+        logLabel.text = db.insert(item: tdData[lastCode]!, start: lastStart,
+                                  span: lastSpan,spnd:0.0,desc:"auto insert")
+    }
+    func increaseDoneCount(){
+        setDoneCount(count: doneCount+1)
+        flushLastLabel()
+    }
+    func setDoneCount(count:Int){
+        doneCount = count
+        self.usrInfo.set(0, forKey: UserInfoKeys.doneCount)
+        flushLastLabel()
+    }
+    func flushLastLabel(){
+        lastLabel.text = "[\(doneCount)]\(tdData[lastCode]!.name):\(formateTime(interval: lastSpan))"
+    }
+    func storeUserInfo(){
+        //usrInfo.set(doneCount, forKey: UserInfoKeys.doneCount)
+        usrInfo.set(currCode, forKey: UserInfoKeys.todoCode)
+        usrInfo.set(lastStart, forKey: UserInfoKeys.startTime)
+        usrInfo.set(lastCode, forKey: UserInfoKeys.lastCode)
+        usrInfo.set(lastSpan, forKey: UserInfoKeys.lastSpan)
+    }
     func formateTime(interval:Int)->String{
-        let ma = interval / 60
+        let ma = (interval) / 60
         if ma < 60{
             return String(format: "%2d:%02d", ma, interval % 60)
         }
         let ha = ma / 60
         let hh = ha % 24
         let mm = ma % 60
-        let ss = interval % 60
-        return String(format: "%02d:%02d:%02d", hh, mm, ss)
+        //let ss = interval % 60
+        return String(format: "%02d:%02d", hh, mm)
     }
     
 }
