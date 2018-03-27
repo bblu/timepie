@@ -23,15 +23,28 @@ class SqliteUtil{
         if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
             print("error opening database")
         }
-        
-        //creating table
+        _ = createTableDone()
+    }
+    
+    func createTableDone()->String{
         if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Done (id INTEGER PRIMARY KEY AUTOINCREMENT,code INTEGER, name TEXT,star INTEGER,stop INTEGER, span INTEGER,spnd decimal(8,2),desc TEXT)", nil, nil, nil) != SQLITE_OK {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             print("error creating table: \(errmsg)")
+            return errmsg
+        }
+        return  "create table Done"
+    }
+    
+    func recreateTableDone()->String{
+        //DROP TABLE IF EXIST
+        if sqlite3_exec(db, "DROP TABLE IF EXISTS Done", nil, nil, nil) != SQLITE_OK {
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            return "|-[error]-\(errmsg)"
         }else{
-            print("crate table Done")
+            return createTableDone()
         }
     }
+    
     func clearAll()->String{
         //DROP TABLE IF EXIST
         //DELETE FROM Done
@@ -65,7 +78,7 @@ class SqliteUtil{
         //print(queryString)
         if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
-            return "error preparing insert: \(errmsg)"
+            return "|-[error]-\(errmsg)"
         }
         if sqlite3_step(stmt) != SQLITE_DONE {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
