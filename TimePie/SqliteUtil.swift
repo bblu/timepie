@@ -50,16 +50,28 @@ class SqliteUtil{
         //DELETE FROM Done
         if sqlite3_exec(db, "DELETE FROM Done", nil, nil, nil) != SQLITE_OK {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
-            return "|-[error]-delete: \(errmsg)"
+            return errmsg
         }else{
-            return "|-[info]-delete all Done items"
+            return "ok"
         }
     }
-    func updateLastEnd(lastStart:Int,newSpan:Int)->String{
+    func updateLastSpan(newSpan:Int)->String{
         var stmt: OpaquePointer?
-        let newStop = lastStart + newSpan
-        let queryString = "UPDATE Done SET stop = \(newStop),span=\(newSpan) WHERE star=\(lastStart)"
-        //print(queryString)
+        var queryString = "SELECT id,stop,span FROM Done order by id desc limit 1"
+        if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            return "|-[error]-\(errmsg)"
+        }
+        if (sqlite3_step(stmt) != SQLITE_ROW){
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            return "|-[error]-\(errmsg)"
+        }
+        let id = Int(sqlite3_column_int(stmt, 0))
+        let stop = Int(sqlite3_column_int(stmt, 1))
+        let span = Int(sqlite3_column_int(stmt, 2))
+
+        let newStop = stop - (span - newSpan)
+        queryString = "UPDATE Done SET stop = \(newStop),span=\(newSpan) WHERE id=\(id)"
         if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             return "|-[error]-preparing insert: \(errmsg)"
@@ -68,8 +80,7 @@ class SqliteUtil{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             return "|-[error]-update done: \(errmsg)"
         }
-        let name = ""
-        return "|-[into]-update \(name) for \(Int(Float(newSpan)*0.01666667)+1)mins successfully"
+        return "ok"
     }
     
     func insert(item:TodoItem, start:Int, span:Int,spnd:Float,desc:String) -> String{
@@ -100,6 +111,7 @@ class SqliteUtil{
         let c = Int(sqlite3_column_int(stmt, 0))
         return c
     }
+    
     func getItem()->[DoneItem]{
         //this is our select query
         //
@@ -131,7 +143,7 @@ class SqliteUtil{
             //print("[\(id)]:c:\(code),n:\(name),s:\(start),e:\(stop),span:\(span)")
             let d = DoneItem(id:id, code:code,name:name, star:star, stop:stop,span:span,spnd:Float(spnd), alia:alia, desc: desc)
             
-            print("[\(d.id)]:c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
+            //print("[\(d.id)]:c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
             doneList.append(d)
             a += 1
         }
@@ -162,7 +174,7 @@ class SqliteUtil{
             task.resume()
         }catch {
             print("error:\(error)")                // handle error
-            return count
+            return -1 * count
         }
         return count
     }

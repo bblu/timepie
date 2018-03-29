@@ -13,7 +13,10 @@ struct UserInfoKeys{
     static let startTime = "start"
     static let lastCode = "last"
     static let lastSpan = "lastSpan"
+    static let storCode = "stor"
+    static let storSpan = "storSpan"
     static let doneCount = "count"
+    static let pickCache = "pickCache"
 }
 
 struct TodoConfig:Decodable{

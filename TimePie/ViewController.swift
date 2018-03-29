@@ -19,6 +19,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     @IBOutlet weak var logLabel: UILabel!
     
     static let localOffset = 28800
+    let minTimespan = 60
     let stdUserDefaults = UserDefaults.standard
     let db = SqliteUtil.timePie
     var doneAmount:Int = 0
@@ -32,12 +33,14 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     var currCode:Int = 0
     var lastCode:Int = 0
     var lastSpan:Int = 0
+    var storCode:Int = 0
+    var storSpan:Int = 0
     
     //-----------------------
     //*UIPickerViewDataSource
     var tdData:[Int:TodoItem] = [:]
     var comNums = [Int]()
-    var comCache = [Int]()
+    var pickCache = [Int]()
     var tdLabel = ""
     public func numberOfComponents(in pickerView: UIPickerView) -> Int{
         return 2
@@ -68,7 +71,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         let select0 = picker.selectedRow(inComponent: 0)
         let index = select0 * 100 + row
         if row >= comNums[select0]{
-            uiLog(log: "|-[error]-index:\(index) for pickerView")
+            uiLogError(msg: "unknown index:\(index) for pickerView")
             return ""
         }
         //print("|-[info]=[select0=\(select0),com=\(component),row=\(row)")
@@ -77,19 +80,21 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     public func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int){
         let select0 = picker.selectedRow(inComponent: 0)
-        
+        var nextCode:Int = 0
         if(component==0){
             picker.reloadComponent(1)
-            pickerView.selectRow(comCache[row], inComponent: 1, animated: false)
+            pickerView.selectRow(pickCache[row], inComponent: 1, animated: false)
+            nextCode = select0 * 100 + pickCache[row]
         }else{
-            comCache[select0] = row
+            pickCache[select0] = row
+            stdUserDefaults.set(pickCache, forKey: UserInfoKeys.pickCache)
+            nextCode = select0 * 100 + row
         }
-        let code = select0 * 100 + component * row
         
-        tdLabel = getLabel(index: code)
+        tdLabel = getLabel(index: nextCode)
         curLabel.text = "\(tdPerfix)\(tdLabel) for 0:00"
         //print("|-[info]=[select0=\(select0),com=\(component),row=\(row)],label=\(tdLabel)")
-        selectTodo(item:tdData[code]!)
+        selectNext(nextCode:nextCode)
     }
 
     func getLabel(index:Int)-> String{
@@ -97,19 +102,27 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     
     @objc func flushUI(_ notification:Notification) {
-        lastCode = stdUserDefaults.integer(forKey: UserInfoKeys.lastCode)
+        let pc = stdUserDefaults.array(forKey: UserInfoKeys.pickCache)
+        if pc != nil{
+            for i in pc!{
+                pickCache.append(i as! Int)
+            }
+        }
+        print("\(pickCache.count)")
+        storCode = stdUserDefaults.integer(forKey: UserInfoKeys.storCode)
+        storSpan = stdUserDefaults.integer(forKey: UserInfoKeys.storSpan)
+        lastCode = stdUserDefaults.integer(forKey: UserInfoKeys.storCode)
+        lastSpan = stdUserDefaults.integer(forKey: UserInfoKeys.storSpan)
         lastStart = stdUserDefaults.integer(forKey: UserInfoKeys.startTime)
-        lastSpan = stdUserDefaults.integer(forKey: UserInfoKeys.lastSpan)
         let intNow = Int(Date().timeIntervalSince1970)
         if lastStart == 0 || lastStart > intNow {
-            // for the first time to setup
-            uiLog(log: "init lastStart = Now Interval")
             lastStart = intNow
+            uiLogInfo(msg: "|-init lastStart = Now")
         }
         tmCounter = intNow - lastStart
         currCode = stdUserDefaults.integer(forKey: UserInfoKeys.todoCode)
         tdLabel = getLabel(index: currCode)
-        uiLog(log: "|-[info]-Done={\(lastCode):\(lastSpan)s} Doing={\(currCode):\(tmCounter)s}")
+        uiLogInfo(msg: "Done={\(tdData[lastCode]!.name):\(Int((lastSpan+30)/60))m} and Doing={\(tdData[currCode]!.name):\(Int((tmCounter+30)/60))m}")
         picker.selectRow(currCode/100, inComponent: 0, animated: false)
         picker.reloadComponent(1)
         picker.selectRow(currCode%100, inComponent: 1, animated: false)
@@ -137,7 +150,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                     addPickerView(items: todoConfig.items)
                     let amouunt = db.getItemCount()
                     if amouunt < 0 {
-                        uiLog(log: "|-[error]-cannot get done count")
+                        uiLogError(msg: "cannot get done count")
                     }else{
                         setDoneAmount(count: amouunt)
                     }
@@ -145,7 +158,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 }
             } catch {
                 print("error:\(error)")                // handle error
-                uiLog(log: "|-[error]-\(error)")
+                uiLogError(msg: error.localizedDescription)
             }
         }
     }
@@ -165,15 +178,21 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     @IBAction func add2Actions(_ sender: UIButton) {
         if doneAmount == 0{
-            uiLog(log: "|-[info]-no item to delete")
+            uiLogInfo(msg: "no item to delete")
             return
         }
         let alert = UIAlertController(title: "Alert", message:"Delete All \(doneAmount) Items?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "No", style: .`cancel`, handler: nil))
         alert.addAction(UIAlertAction(title: "Yes", style: .`default`, handler: { _ in
-            self.uiLog(log: self.db.clearAll());
+            let msg = self.db.clearAll()
             //self.uiLog(log: self.db.recreateTableDone())
-            self.resetDoneAmount()
+            if msg == "ok" {
+                self.uiLogInfo(msg: "delete all Done items");
+                self.resetDoneAmount()
+            }else{
+                self.uiLogError(msg: msg)
+            }
+
         }))
         self.present(alert, animated: true, completion: nil)
     }
@@ -183,21 +202,36 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     
     @IBAction func changeLastSpan(_ sender: UIButton) {
+        if lastSpan < minTimespan{
+            uiLogInfo(msg: "timespan is too short to reset")
+        }
         if spanSlider.isHidden{
             //start Edit
-            let maxValue:Float = Float(lastSpan)/60
+            let maxValue:Float = Float(storSpan)
             spanSlider.maximumValue = maxValue * 1.25
             spanSlider.setValue(maxValue, animated: false)
             lastButton.setTitle("💾",for:UIControlState.normal)
         }else{
             //save Edit
-            let span = Int(spanSlider.value*60)
-            if abs(lastSpan - span) < 180{
-                flushLastLabel()
-                uiLog(log: "|-[info]-time span is too short to store...")
+            let newSpan = Int(spanSlider.value)
+            if abs(storSpan - newSpan) < minTimespan{
+                uiLogInfo(msg: "|-deltaSpan is too short to store...")
             }else{
-                uiLog(log: db.updateLastEnd(lastStart: lastStart, newSpan: span))
+                //print("lastcode=\(lastCode)")
+                let msg = db.updateLastSpan(newSpan: newSpan)
+                if msg == "ok" {
+                    lastStart -= storSpan - newSpan
+                    tmCounter += storSpan - newSpan
+                    storSpan = newSpan
+                    lastSpan = newSpan
+                    stdUserDefaults.set(lastStart, forKey: UserInfoKeys.startTime)
+                    stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.lastSpan)
+                    uiLogInfo(msg: "set last[\(lastCode):\(tdData[lastCode]!.name)] time span to \(Int(newSpan/60))min")
+                }else{
+                    uiLogError(msg: msg)
+                }
             }
+            flushLastLabel()
             lastButton.setTitle("⚙️",for:UIControlState.normal)
         }
         spanSlider.isHidden = !spanSlider.isHidden
@@ -210,18 +244,20 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         sender.isHidden = true
     }
     @IBAction func lastSpanSlider(_ sender: UISlider) {
-        let val = Int(sender.value*60)
+        let val = Int(sender.value)
         let loc = lastStart + val + ViewController.localOffset
-        lastLabel.text = "[\(doneAmount)]\(tdData[lastCode]!.name):\(formateTime(interval: val)) -> \(formateTime(interval:loc))"
+        lastLabel.text = "[\(doneAmount)]\(tdData[storCode]!.name):\(formateTime(interval: val)) -> \(formateTime(interval:loc))"
     }
     
     @IBAction func backupData(_ sender: Any) {
+        //todo 异步调用连接超时的问题
         doneAmount = db.backupData()
-        if doneAmount < 0{
-            uiLog(log: "|-[error]-cannot connect to bkup address")
+        if doneAmount < 0 {
+            doneAmount *= -1
+            uiLogError(msg: "cannot connect to bkup address for \(doneAmount)")
         }else{
             stdUserDefaults.set(doneAmount, forKey: UserInfoKeys.doneCount)
-            uiLog(log: "|-[info]-bkup count = \(doneAmount) span\(lastSpan)|tm\(tmCounter)")
+            uiLogInfo(msg: "bkup count = \(doneAmount) span\(lastSpan)|tm\(tmCounter)")
             //lastSpan = tmCounter
             flushLastLabel()
         }
@@ -232,7 +268,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             if item.code % 100 == 0{
                 //print("init comNumbers for \(item.code)")
                 comNums.append(1)
-                comCache.append(0)
+                pickCache.append(0)
             }else{
                 comNums[item.code/100] += 1
             }
@@ -271,19 +307,21 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         curLabel.text = "current is: \(action!)"
         
     }
-    func selectTodo(item:TodoItem){
+    func selectNext(nextCode:Int){
         let now = Int(Date().timeIntervalSince1970)
         let span = now - lastStart
         //only store the item which is longer than a minute
         lastCode = currCode
-        currCode = item.code
-        if span > 60 {
-            uiLog(log: db.insert(item: tdData[lastCode]!, start: lastStart,
-                                 span: span,spnd:0.0,desc:""))
-            increaseDoneCount()
-        }
-        lastStart = now
         lastSpan = span
+        currCode = nextCode
+        if span > minTimespan {
+            uiLog(log: db.insert(item: tdData[lastCode]!, start: lastStart,
+                                 span: lastSpan,spnd:0.0,desc:""))
+            //print("|-[info]-insert last=\(tdData[lastCode]!.name) for \(lastSpan)")
+            increaseDoneAmount()
+            lastStart = now
+        }
+        //print("|-[info]-stor:\(tdData[storCode]!.name) last=\(tdData[lastCode]!.name)")
         storeUserInfo()
         tmCounter = 0
     }
@@ -304,27 +342,38 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                                   span: lastSpan,spnd:0.0,desc:"auto insert"))
     }
     
-    func increaseDoneCount(){
+    func increaseDoneAmount(){
         setDoneAmount(count: doneAmount+1)
     }
     func setDoneAmount(count:Int){
         doneAmount = count
+        storCode = lastCode
+        storSpan = lastSpan
         self.stdUserDefaults.set(0, forKey: UserInfoKeys.doneCount)
+        stdUserDefaults.set(storCode, forKey: UserInfoKeys.storCode)
+        stdUserDefaults.set(storSpan, forKey: UserInfoKeys.storSpan)
         flushLastLabel()
     }
     func flushLastLabel(){
-        lastLabel.text = "[\(doneAmount)]\(tdData[lastCode]!.name):\(formateTime(interval: lastSpan))"
+        lastLabel.text = "[\(doneAmount)]\(tdData[storCode]!.name):\(formateTime(interval: storSpan))"
     }
     func storeUserInfo(){
-        //usrInfo.set(doneCount, forKey: UserInfoKeys.doneCount)
         stdUserDefaults.set(currCode, forKey: UserInfoKeys.todoCode)
-        stdUserDefaults.set(lastStart, forKey: UserInfoKeys.startTime)
         stdUserDefaults.set(lastCode, forKey: UserInfoKeys.lastCode)
+        stdUserDefaults.set(lastStart, forKey: UserInfoKeys.startTime)
         stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.lastSpan)
+    }
+    
+    func uiLogError(msg:String){
+        uiLog(log: "|-[error]-\(msg)")
+    }
+    func uiLogInfo(msg:String){
+        uiLog(log: "|-[info]-\(msg)")
     }
     func uiLog(log:String){
         logLabel.text = log
     }
+    
     func formateTime(interval:Int)->String{
         let ma = (interval) / 60
         if ma < 60{
@@ -333,8 +382,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         let ha = ma / 60
         let hh = ha % 24
         let mm = ma % 60
-        //let ss = interval % 60
-        return String(format: "%02d:%02d", hh, mm)
+        let ss = interval % 60
+        return String(format: "%02d:%02d:%02d", hh, mm, ss)
     }
     
 }
