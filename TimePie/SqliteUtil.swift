@@ -149,6 +149,42 @@ class SqliteUtil{
         }
         return doneList
     }
+    func getMainClassSince(begin:Int)-> String{
+        return "todo..."
+        let queryString = "SELECT id,code,name,star,stop,span,spnd,desc FROM Done"
+        //statement pointer
+        var stmt:OpaquePointer?
+        
+        //preparing the query
+        if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            print("error preparing insert: \(errmsg)")
+            
+        }
+        var a = 0
+        
+        //traversing through all the records
+        //code, name, start,end,span
+        //print("sqlite3_step(stmt)=\(sqlite3_step(stmt))")
+        while(sqlite3_step(stmt) == SQLITE_ROW){
+            let id = Int(sqlite3_column_int(stmt, 0))
+            let code = Int(sqlite3_column_int(stmt, 1))
+            let name = String(cString: sqlite3_column_text(stmt, 2))
+            let star = Int(sqlite3_column_int(stmt, 3))
+            let stop = Int(sqlite3_column_int(stmt, 4))
+            let span = Int(sqlite3_column_int(stmt, 5))
+            let spnd = Double(sqlite3_column_double(stmt, 6))
+            let alia = ""
+            let desc = String(cString: sqlite3_column_text(stmt, 2))
+            //print("[\(id)]:c:\(code),n:\(name),s:\(start),e:\(stop),span:\(span)")
+            _ = DoneItem(id:id, code:code,name:name, star:star, stop:stop,span:span,spnd:Float(spnd), alia:alia, desc: desc)
+            
+            //print("[\(d.id)]:c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
+            a += 1
+        }
+        
+        return ""
+    }
     func backupData() ->Int {
         // server endpoint
         let endpoint = "\(addr)/timepie/done"

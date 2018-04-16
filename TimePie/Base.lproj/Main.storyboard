@@ -1,19 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13771" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina5_5" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13772"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
-    <customFonts key="customFonts">
-        <array key="AppleColorEmoji@2x.ttc">
-            <string>AppleColorEmoji</string>
-        </array>
-    </customFonts>
     <scenes>
         <!--View Controller-->
         <scene sceneID="tne-QT-ifu">
@@ -23,15 +18,15 @@
                         <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="2" translatesAutoresizingMaskIntoConstraints="NO" id="PAi-53-Sgm">
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="PAi-53-Sgm">
                                 <rect key="frame" x="16" y="73" width="382" height="29"/>
                                 <segments>
-                                    <segment title="Month"/>
-                                    <segment title="Week"/>
                                     <segment title="Today"/>
+                                    <segment title="Week"/>
+                                    <segment title="Month"/>
                                 </segments>
                                 <connections>
-                                    <action selector="changeSpan:" destination="BYZ-38-t0r" eventType="valueChanged" id="a6y-XP-0gh"/>
+                                    <action selector="staticSpanChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="Kaf-QN-UWv"/>
                                 </connections>
                             </segmentedControl>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="current is:👨🏻‍💻coding" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0Xg-zl-bdP">
@@ -107,11 +102,22 @@
                                     <action selector="cancelEditLast:" destination="BYZ-38-t0r" eventType="touchUpInside" id="BXm-hf-1Sj"/>
                                 </connections>
                             </button>
+                            <pickerView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xSH-Xf-tUS">
+                                <rect key="frame" x="0.0" y="344" width="414" height="216"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                            </pickerView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="sleep:1,work:2,study:3" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="EWE-of-GjC">
+                                <rect key="frame" x="16" y="175" width="382" height="20.333333333333343"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.016804177310000001" green="0.19835099580000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="l4f-2j-Xqg" secondAttribute="bottom" constant="20" id="85r-DB-hX9"/>
                             <constraint firstItem="l4f-2j-Xqg" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="16" id="8oM-7R-c3J"/>
+                            <constraint firstItem="EWE-of-GjC" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="16" id="9dF-Go-5eX"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="LQ8-KS-ZQa" secondAttribute="trailing" constant="20" id="KTd-hK-dKS"/>
                             <constraint firstItem="LQ8-KS-ZQa" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="Ley-2R-g67"/>
                             <constraint firstItem="PAi-53-Sgm" firstAttribute="top" secondItem="yia-BI-uC9" secondAttribute="bottom" constant="8" symbolic="YES" id="QMb-mg-gHA"/>
@@ -119,7 +125,9 @@
                             <constraint firstItem="yia-BI-uC9" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="16" id="T15-kh-IOO"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="yia-BI-uC9" secondAttribute="trailing" constant="9" id="VcZ-zs-fIU"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="l4f-2j-Xqg" secondAttribute="trailing" constant="16" id="YiK-E1-PJK"/>
+                            <constraint firstItem="EWE-of-GjC" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="155" id="cWd-8I-Aek"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="SsU-FU-Rxh" secondAttribute="trailing" constant="20" id="eSO-ZZ-EIM"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="EWE-of-GjC" secondAttribute="trailing" constant="16" id="jgA-gy-7ko"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="PAi-53-Sgm" secondAttribute="trailing" constant="16" id="qL9-xL-vE1"/>
                             <constraint firstItem="SsU-FU-Rxh" firstAttribute="top" secondItem="PAi-53-Sgm" secondAttribute="bottom" constant="1" id="qtF-98-9ym"/>
                             <constraint firstItem="PAi-53-Sgm" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="16" id="u5A-Kf-LZn"/>
@@ -134,6 +142,8 @@
                         <outlet property="lastLabel" destination="EMP-1p-J0Q" id="vVu-cg-QSF"/>
                         <outlet property="logLabel" destination="l4f-2j-Xqg" id="K6P-ph-UEw"/>
                         <outlet property="spanSlider" destination="LQ8-KS-ZQa" id="ffo-SK-NEZ"/>
+                        <outlet property="statisticsLabel" destination="EWE-of-GjC" id="U4o-RO-rhT"/>
+                        <outlet property="todoPickerView" destination="xSH-Xf-tUS" id="MQt-Zw-OW9"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

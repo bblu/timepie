@@ -9,6 +9,28 @@
 import UIKit
 import AudioToolbox
 
+extension Date {
+    var thisDay: Date {
+        let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month, .day], from: self))!
+        let today = Calendar.current.date(byAdding: .hour, value: 8, to: base)!
+        print("today:\(today)")
+        return today
+    }
+    
+    var thisWeek: Date {
+        let base = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: self))!
+        let week = Calendar.current.date(byAdding: .hour, value: 32, to: base)!
+        print("week:\(week)")
+        return week
+    }
+    var thisMonth: Date {
+        let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: self))!
+        let month = Calendar.current.date(byAdding: .hour, value: 8, to: base)!
+        print("month:\(month)")
+        return month
+    }
+}
+
 class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelegate {
     //---------------------------------------------------------------------
     @IBOutlet weak var curLabel: UILabel!
@@ -17,13 +39,15 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     @IBOutlet weak var spanSlider: UISlider!
     @IBOutlet weak var cancelEditButton: UIButton!
     @IBOutlet weak var logLabel: UILabel!
+    @IBOutlet weak var todoPickerView: UIPickerView!
+    @IBOutlet weak var statisticsLabel: UILabel!
     
     static let localOffset = 28800
     let minTimespan = 60
     let stdUserDefaults = UserDefaults.standard
     let db = SqliteUtil.timePie
     var doneAmount:Int = 0
-    var picker = UIPickerView()
+    //var todoPickerView = UIPickerView()
     var timer = Timer()
     var tmCounter:Int = 0
     let inputMode = 1
@@ -49,7 +73,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         if component == 0 {
             return comNums.count
         }
-        let select0 = picker.selectedRow(inComponent: 0)
+        let select0 = todoPickerView.selectedRow(inComponent: 0)
         return comNums[select0]
     }
     // UIPickerViewDelegate
@@ -68,7 +92,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             
             return getLabel(index:row * 100)
         }
-        let select0 = picker.selectedRow(inComponent: 0)
+        let select0 = todoPickerView.selectedRow(inComponent: 0)
         let index = select0 * 100 + row
         if row >= comNums[select0]{
             uiLogError(msg: "unknown index:\(index) for pickerView")
@@ -79,10 +103,10 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     
     public func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int){
-        let select0 = picker.selectedRow(inComponent: 0)
+        let select0 = todoPickerView.selectedRow(inComponent: 0)
         var nextCode:Int = 0
         if(component==0){
-            picker.reloadComponent(1)
+            todoPickerView.reloadComponent(1)
             pickerView.selectRow(pickCache[row], inComponent: 1, animated: false)
             nextCode = select0 * 100 + pickCache[row]
         }else{
@@ -123,9 +147,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         currCode = stdUserDefaults.integer(forKey: UserInfoKeys.todoCode)
         tdLabel = getLabel(index: currCode)
         uiLogInfo(msg: "Done={\(tdData[lastCode]!.name):\(Int((lastSpan+30)/60))m} and Doing={\(tdData[currCode]!.name):\(Int((tmCounter+30)/60))m}")
-        picker.selectRow(currCode/100, inComponent: 0, animated: false)
-        picker.reloadComponent(1)
-        picker.selectRow(currCode%100, inComponent: 1, animated: false)
+        todoPickerView.selectRow(currCode/100, inComponent: 0, animated: false)
+        todoPickerView.reloadComponent(1)
+        todoPickerView.selectRow(currCode%100, inComponent: 1, animated: false)
         //print("|-[user]-Done={\(lastCode):\(lastSpan)s} Doing={\(currCode):\(tmCounter)s}")
         flushLastLabel()
     }
@@ -197,8 +221,18 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         self.present(alert, animated: true, completion: nil)
     }
     
-    @IBAction func changeSpan(_ sender: Any) {
-        print("changeSpan")
+    @IBAction func staticSpanChanged(_ sender: UISegmentedControl) {
+        let index = sender.selectedSegmentIndex
+        var begin = 0.0
+        if index == 0{
+            begin = Date().thisDay.timeIntervalSince1970
+        }else if index == 1{
+            begin = Date().thisWeek.timeIntervalSince1970
+        } else if index == 2 {
+            begin = Date().thisMonth.timeIntervalSince1970
+        }
+        let res = db.getMainClassSince(begin:Int(begin))
+        print(res)
     }
     
     @IBAction func changeLastSpan(_ sender: UIButton) {
@@ -275,13 +309,11 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             tdData[item.code] = item
             //print("\(item.code) : \(item.alias) and count=\(comNums[item.code/100])")
         }
-        //for i in comNums{print("\(i)")}
-        //let dsDelegate = TodoPickerDsDelegate(items:items)
-        picker.dataSource = self
-        picker.delegate = self
-        picker.center = self.view.center
-        picker.center.y += 100
-        self.view.addSubview(picker)
+        todoPickerView.dataSource = self
+        todoPickerView.delegate = self
+        //todoPickerView.center = self.view.center
+        //todoPickerView.center.y += 100
+        //self.view.addSubview(todoPickerView)
         //picker.selectRow(1, inComponent: 1, animated: true)
     }
     func addButtons(items:[TodoItem]){
