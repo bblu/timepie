@@ -10,23 +10,29 @@ import UIKit
 import AudioToolbox
 
 extension Date {
+    // returns an integer from 1 - 7, with 1 being monday and 7 being Sunday
+    var dayOfWeek: Int {
+        // returns an integer from 1 - 7, with 1 being Sunday and 7 being Saturday
+        let dow = Calendar.current.dateComponents([.weekday], from: self).weekday!
+        if dow == 1 {
+            return 7
+        }
+        return dow - 1
+    }
     var thisDay: Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month, .day], from: self))!
         let today = Calendar.current.date(byAdding: .hour, value: 8, to: base)!
-        print("today:\(today)")
         return today
     }
     
     var thisWeek: Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: self))!
         let week = Calendar.current.date(byAdding: .hour, value: 32, to: base)!
-        print("week:\(week)")
         return week
     }
     var thisMonth: Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: self))!
         let month = Calendar.current.date(byAdding: .hour, value: 8, to: base)!
-        print("month:\(month)")
         return month
     }
 }
@@ -223,16 +229,33 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     @IBAction func staticSpanChanged(_ sender: UISegmentedControl) {
         let index = sender.selectedSegmentIndex
-        var begin = 0.0
-        if index == 0{
-            begin = Date().thisDay.timeIntervalSince1970
-        }else if index == 1{
-            begin = Date().thisWeek.timeIntervalSince1970
+        var begin:Date = Date().thisDay
+        let weekends = Date().dayOfWeek
+        var ajust = 0
+        var days = 1
+        if index == 1{
+            begin = Date().thisWeek
         } else if index == 2 {
-            begin = Date().thisMonth.timeIntervalSince1970
+            begin = Date().thisMonth
+            ajust = -1
         }
-        let res = db.getMainClassSince(begin:Int(begin))
-        print(res)
+        days = Calendar.current.dateComponents([.day], from:begin, to:Date()).day! + 1
+        let weekdays = weekdaysByNow(dayofweek: weekends, days: days) + ajust
+        print("days:\(days),weekdays:\(weekdays)")
+        let sumMain = db.sumMainClassSince(begin:Int(begin.timeIntervalSince1970))
+        var statistics = ""
+        for (main,sum) in sumMain.enumerated(){
+            if main > 0 && sum > 0 {
+                if main == 1{
+                    statistics += "🛏️\(shortTime(interval:Double(sum), days:Double(days))) "
+                }else if main == 3{
+                    statistics += "\(tdData[main*100]!.icon)\(shortTime(interval: Double(sum), days:Double(weekdays))) "
+                }else{
+                    statistics += "\(tdData[main*100]!.icon)\(shortTime(interval: Double(sum), days:Double(days))) "
+                }
+            }
+        }
+        statisticsLabel.text = statistics
     }
     
     @IBAction func changeLastSpan(_ sender: UIButton) {
@@ -405,7 +428,20 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     func uiLog(log:String){
         logLabel.text = log
     }
-    
+    func weekdaysByNow(dayofweek:Int, days:Int)->Int{
+        var weekdays = 0
+        var w = dayofweek
+        for _ in (1...days){
+            if w < 6 {
+                weekdays += 1
+            }
+            w += 1
+            if w == 8 {
+                w = 1
+            }
+        }
+        return weekdays
+    }
     func formateTime(interval:Int)->String{
         let ma = (interval) / 60
         if ma < 60{
@@ -416,6 +452,12 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         let mm = ma % 60
         let ss = interval % 60
         return String(format: "%02d:%02d:%02d", hh, mm, ss)
+    }
+    func shortTime(interval:Double,days:Double)->String{
+        if interval > (3600 * days){
+            return String(format: "%.1fh", interval / (3600 * days))
+        }
+        return String(format: "%.1fm", interval / (60 * days))
     }
     
 }

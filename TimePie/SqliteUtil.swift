@@ -35,6 +35,22 @@ class SqliteUtil{
         return  "create table Done"
     }
     
+    func alterTableDone()->String {
+        if sqlite3_exec(db, "alter table Done add column main INTEGER", nil, nil, nil) == SQLITE_OK {
+            sqlite3_exec(db, "CREATE INDEX index_main ON Done (main);", nil, nil, nil)
+            sqlite3_exec(db, "CREATE INDEX index_code ON Done (code);", nil, nil, nil)
+            
+            if sqlite3_exec(db, "UPDATE Done SET main = code/100", nil, nil, nil) == SQLITE_OK {
+                return "ok"
+            }else{
+                let errmsg = String(cString: sqlite3_errmsg(db)!)
+                print("error update table: \(errmsg)")
+                return errmsg
+            }
+        }
+        return "none"
+    }
+    
     func recreateTableDone()->String{
         //DROP TABLE IF EXIST
         if sqlite3_exec(db, "DROP TABLE IF EXISTS Done", nil, nil, nil) != SQLITE_OK {
@@ -115,7 +131,7 @@ class SqliteUtil{
     func getItem()->[DoneItem]{
         //this is our select query
         //
-        let queryString = "SELECT id,code,name,star,stop,span,spnd,desc FROM Done"
+        let queryString = "SELECT id,code,name,star,stop,span,spnd,desc,main FROM Done"
         //statement pointer
         var stmt:OpaquePointer?
         var doneList = [DoneItem]()
@@ -139,51 +155,36 @@ class SqliteUtil{
             let span = Int(sqlite3_column_int(stmt, 5))
             let spnd = Double(sqlite3_column_double(stmt, 6))
             let alia = ""
-            let desc = String(cString: sqlite3_column_text(stmt, 2))
+            let desc = String(cString: sqlite3_column_text(stmt, 7))
+            let main = Int(sqlite3_column_int(stmt, 8))
             //print("[\(id)]:c:\(code),n:\(name),s:\(start),e:\(stop),span:\(span)")
             let d = DoneItem(id:id, code:code,name:name, star:star, stop:stop,span:span,spnd:Float(spnd), alia:alia, desc: desc)
             
-            //print("[\(d.id)]:c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
+            print("[\(d.id)],m:\(main),c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
             doneList.append(d)
             a += 1
         }
         return doneList
     }
-    func getMainClassSince(begin:Int)-> String{
-        return "todo..."
-        let queryString = "SELECT id,code,name,star,stop,span,spnd,desc FROM Done"
+    // calculate the amount of main class timespan for a peried time
+    func sumMainClassSince(begin:Int)->[Int] {
+        var aSum = [0,0,0,0,0,0,0]
+        let queryString = "SELECT main,SUM(span) sums FROM Done WHERE stop > \(begin) AND (code = 101 or main in (2,3,4,5,6)) GROUP BY main ORDER BY main"
         //statement pointer
         var stmt:OpaquePointer?
-        
         //preparing the query
         if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
-            print("error preparing insert: \(errmsg)")
-            
+            print("\(errmsg)")
+            return aSum
         }
-        var a = 0
-        
-        //traversing through all the records
-        //code, name, start,end,span
-        //print("sqlite3_step(stmt)=\(sqlite3_step(stmt))")
         while(sqlite3_step(stmt) == SQLITE_ROW){
-            let id = Int(sqlite3_column_int(stmt, 0))
-            let code = Int(sqlite3_column_int(stmt, 1))
-            let name = String(cString: sqlite3_column_text(stmt, 2))
-            let star = Int(sqlite3_column_int(stmt, 3))
-            let stop = Int(sqlite3_column_int(stmt, 4))
-            let span = Int(sqlite3_column_int(stmt, 5))
-            let spnd = Double(sqlite3_column_double(stmt, 6))
-            let alia = ""
-            let desc = String(cString: sqlite3_column_text(stmt, 2))
-            //print("[\(id)]:c:\(code),n:\(name),s:\(start),e:\(stop),span:\(span)")
-            _ = DoneItem(id:id, code:code,name:name, star:star, stop:stop,span:span,spnd:Float(spnd), alia:alia, desc: desc)
-            
-            //print("[\(d.id)]:c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
-            a += 1
+            let main = Int(sqlite3_column_int(stmt, 0))
+            let sums = Int(sqlite3_column_int(stmt, 1))
+            //print("m:\(main),s:\(sums)")
+            aSum[main] = sums
         }
-        
-        return ""
+        return aSum
     }
     func backupData() ->Int {
         // server endpoint
