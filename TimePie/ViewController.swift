@@ -19,21 +19,25 @@ extension Date {
         }
         return dow - 1
     }
+    var dayOfMonth:Int{
+        return Calendar.current.component(.day, from: self)
+    }
     var thisDay: Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month, .day], from: self))!
-        let today = Calendar.current.date(byAdding: .hour, value: 8, to: base)!
-        return today
+        //let today = Calendar.current.date(byAdding: .hour, value: 8, to: base)!
+        return base
     }
     
     var thisWeek: Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: self))!
-        let week = Calendar.current.date(byAdding: .hour, value: 32, to: base)!
+        //the start of week is sunday make it to monday
+        let week = Calendar.current.date(byAdding: .day, value: 1, to: base)!
         return week
     }
     var thisMonth: Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: self))!
-        let month = Calendar.current.date(byAdding: .hour, value: 8, to: base)!
-        return month
+        //let month = Calendar.current.date(byAdding: .hour, value: 8, to: base)!
+        return base
     }
 }
 
@@ -133,12 +137,15 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     @objc func flushUI(_ notification:Notification) {
         let pc = stdUserDefaults.array(forKey: UserInfoKeys.pickCache)
-        if pc != nil{
+        if pc != nil && pickCache.count<1{
             for i in pc!{
                 pickCache.append(i as! Int)
+                if pickCache.count > 10{
+                    break
+                }
             }
         }
-        print("\(pickCache.count)")
+        print("pickCache.count = \(pickCache.count)")
         storCode = stdUserDefaults.integer(forKey: UserInfoKeys.storCode)
         storSpan = stdUserDefaults.integer(forKey: UserInfoKeys.storSpan)
         lastCode = stdUserDefaults.integer(forKey: UserInfoKeys.storCode)
@@ -152,6 +159,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         tmCounter = intNow - lastStart
         currCode = stdUserDefaults.integer(forKey: UserInfoKeys.todoCode)
         tdLabel = getLabel(index: currCode)
+        //print("lastCode or storCode = \(lastCode)")
         uiLogInfo(msg: "Done={\(tdData[lastCode]!.name):\(Int((lastSpan+30)/60))m} and Doing={\(tdData[currCode]!.name):\(Int((tmCounter+30)/60))m}")
         todoPickerView.selectRow(currCode/100, inComponent: 0, animated: false)
         todoPickerView.reloadComponent(1)
@@ -231,24 +239,35 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         let index = sender.selectedSegmentIndex
         var begin:Date = Date().thisDay
         let weekends = Date().dayOfWeek
-        var ajust = 0
         var days = 1
-        if index == 1{
-            begin = Date().thisWeek
-        } else if index == 2 {
-            begin = Date().thisMonth
-            ajust = -1
+        var weekdays = 1
+        
+        if index == 0{
+        }else{
+            if index == 1{
+                begin = Date().thisWeek
+                days = Date().dayOfWeek
+                days += Calendar.current.component(.hour, from: Date()) > 18 ? 1 : 0
+                weekdays = days > 5 ? 5 : days
+            } else if index == 2 {
+                begin = Date().thisMonth
+                days = Date().dayOfMonth
+                days += Calendar.current.component(.hour, from: Date()) > 18 ? 1 : 0
+                weekdays = weekdaysByNow(dayofweek: weekends, days: days)
+            }
+            print("begin=\(begin),days=\(days)")
         }
-        days = Calendar.current.dateComponents([.day], from:begin, to:Date()).day! + 1
-        let weekdays = weekdaysByNow(dayofweek: weekends, days: days) + ajust
-        print("days:\(days),weekdays:\(weekdays)")
+        todoPickerView.isHidden = index > 0
+        //db.intoMainClassSince(begin:Int(begin.timeIntervalSince1970))
+        db.checkSpanSince(begin: Int(begin.timeIntervalSince1970))
+        uiLogInfo(msg: "days=\(days),weekdays=\(weekdays)")
+        //return
         let sumMain = db.sumMainClassSince(begin:Int(begin.timeIntervalSince1970))
         var statistics = ""
         for (main,sum) in sumMain.enumerated(){
-            if main > 0 && sum > 0 {
-                if main == 1{
-                    statistics += "🛏️\(shortTime(interval:Double(sum), days:Double(days))) "
-                }else if main == 3{
+            print("\(main):\(Double(sum)/3600.0)")
+            if  sum > 0 {
+                if main == 3{
                     statistics += "\(tdData[main*100]!.icon)\(shortTime(interval: Double(sum), days:Double(weekdays))) "
                 }else{
                     statistics += "\(tdData[main*100]!.icon)\(shortTime(interval: Double(sum), days:Double(days))) "
@@ -323,21 +342,20 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     func addPickerView(items:[TodoItem]){
         for item in items{
             if item.code % 100 == 0{
-                //print("init comNumbers for \(item.code)")
                 comNums.append(1)
                 pickCache.append(0)
             }else{
                 comNums[item.code/100] += 1
             }
+            //db.alterCodeByName(name: item.name, code:item.code)
             tdData[item.code] = item
-            //print("\(item.code) : \(item.alias) and count=\(comNums[item.code/100])")
         }
+        //db.alterTableDone()
         todoPickerView.dataSource = self
         todoPickerView.delegate = self
         //todoPickerView.center = self.view.center
         //todoPickerView.center.y += 100
         //self.view.addSubview(todoPickerView)
-        //picker.selectRow(1, inComponent: 1, animated: true)
     }
     func addButtons(items:[TodoItem]){
         for item in items{
@@ -373,6 +391,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             uiLog(log: db.insert(item: tdData[lastCode]!, start: lastStart,
                                  span: lastSpan,spnd:0.0,desc:""))
             //print("|-[info]-insert last=\(tdData[lastCode]!.name) for \(lastSpan)")
+            //storCode = lastCode
             increaseDoneAmount()
             lastStart = now
         }
@@ -398,15 +417,17 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     
     func increaseDoneAmount(){
+        storCode = lastCode
+        storSpan = lastSpan
+        self.stdUserDefaults.set(0, forKey: UserInfoKeys.doneCount)
+        stdUserDefaults.set(lastCode, forKey: UserInfoKeys.storCode)
+        print("set storCode = \(lastCode)")
+        stdUserDefaults.set(storSpan, forKey: UserInfoKeys.storSpan)
         setDoneAmount(count: doneAmount+1)
     }
     func setDoneAmount(count:Int){
         doneAmount = count
-        storCode = lastCode
-        storSpan = lastSpan
-        self.stdUserDefaults.set(0, forKey: UserInfoKeys.doneCount)
-        stdUserDefaults.set(storCode, forKey: UserInfoKeys.storCode)
-        stdUserDefaults.set(storSpan, forKey: UserInfoKeys.storSpan)
+        
         flushLastLabel()
     }
     func flushLastLabel(){

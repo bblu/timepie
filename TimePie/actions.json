@@ -2,17 +2,17 @@
     "user":"bblu",
     "date":"2018-03-09",
     "items":[
-             {"name": "unknown","alias":"未知","icon":"⚫️","code":0,"span":0},
+             {"name": "sleep","alias":"睡觉","icon":"🛌","code":0,"span":360},
+             {"name": "nap","alias":"小睡","icon":"🕛","code":1,"span":60},
              
              {"name": "personal","alias":"个人","icon":"👤","code":100,"span":0},
-             {"name": "sleep","alias":"睡觉","icon":"🛌","code":101,"span":0},
-             {"name": "wash","alias":"洗漱","icon":"🚰","code":102,"span":20},
-             {"name": "food","alias":"吃饭","icon":"🍲","code":103,"span":30},
-             {"name": "news","alias":"资讯","icon":"📰","code":104,"span":60},
-             {"name": "advd","alias":"影音","icon":"🎧","code":105,"span":120},
-             {"name": "bath","alias":"洗澡","icon":"🚿","code":106,"span":20},
-             {"name": "rest","alias":"休闲","icon":"🎮","code":107,"span":60},
-             {"name": "diy","alias":"制作","icon":"🛠","code":108,"span":120},
+             {"name": "wash","alias":"洗漱","icon":"🚰","code":101,"span":20},
+             {"name": "food","alias":"吃饭","icon":"🍲","code":102,"span":30},
+             {"name": "news","alias":"资讯","icon":"📰","code":103,"span":60},
+             {"name": "advd","alias":"影音","icon":"🎧","code":104,"span":120},
+             {"name": "bath","alias":"洗澡","icon":"🚿","code":105,"span":20},
+             {"name": "rest","alias":"休闲","icon":"🎮","code":106,"span":60},
+             {"name": "diy","alias":"制作","icon":"🛠","code":107,"span":120},
              
              {"name": "traffic","alias":"出行","icon":"🚉","code":200,"span":60},
              {"name": "walk","alias":"步行","icon":"👣","code":201,"span":30},
@@ -21,7 +21,7 @@
              {"name": "taxi","alias":"出租","icon":"🚕","code":204,"span":50},
              {"name": "drive","alias":"驾车","icon":"🚗","code":205,"span":60},
              {"name": "train","alias":"火车","icon":"🚄","code":206,"span":240},
-             {"name": "air","alias":"飞机","icon":"✈️","code":207,"span":360},
+             {"name": "airp","alias":"飞机","icon":"✈️","code":207,"span":360},
              {"name": "ship","alias":"轮船","icon":"🚢","code":208,"span":600},
              
              {"name": "work","alias":"工作","icon":"📌","code":300,"span":180},
@@ -52,7 +52,7 @@
              {"name": "badminton","alias":"羽毛球","icon":"🏸","code":604,"span":60},
              {"name": "swim","alias":"游泳","icon":"🏊","code":605,"span":60},
              
-             {"name": "else","alias":"其他","icon":"🕐","code":700,"span":480},
+             {"name": "else","alias":"其他","icon":"🗿","code":700,"span":480},
              {"name": "medical","alias":"医疗","icon":"🏥","code":701,"span":180},
              {"name": "government","alias":"行政","icon":"🏢","code":702,"span":180}
              

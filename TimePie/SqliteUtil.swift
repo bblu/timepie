@@ -10,6 +10,9 @@ import Foundation
 import SQLite3
 
 class SqliteUtil{
+    func formateTime(interval:Int)->Date{
+        return Date(timeIntervalSince1970: Double(interval+3600*8))
+    }
     private var db: OpaquePointer?
     private var addr = "http://127.0.0.1:8008"
     static let timePie = SqliteUtil()
@@ -35,11 +38,28 @@ class SqliteUtil{
         return  "create table Done"
     }
     
-    func alterTableDone()->String {
-        if sqlite3_exec(db, "alter table Done add column main INTEGER", nil, nil, nil) == SQLITE_OK {
-            sqlite3_exec(db, "CREATE INDEX index_main ON Done (main);", nil, nil, nil)
-            sqlite3_exec(db, "CREATE INDEX index_code ON Done (code);", nil, nil, nil)
+    func alterCodeByName(name:String, code:Int){
+        if sqlite3_exec(db, "UPDATE Done SET code = \(code) WHERE name='\(name)'", nil, nil, nil) == SQLITE_OK {
+            print("set \(name) code=\(code)")
             
+        }else{
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            print("error update table: \(errmsg)")
+        }
+    }
+    
+    func alterTableDone()->String {
+        //sqlite3_exec(db, "CREATE INDEX index_main ON Done (main);", nil, nil, nil)
+        //sqlite3_exec(db, "CREATE INDEX index_code ON Done (code);", nil, nil, nil)
+        //if sqlite3_exec(db, "UPDATE Done SET span = 10800 WHERE id=362", nil, nil, nil) == SQLITE_OK {}
+        if sqlite3_exec(db, "DELETE from Done WHERE id=407", nil, nil, nil) == SQLITE_OK {
+            print("DELETE form Done WHERE id=407")
+            return "ok"
+        }else{
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            print("error update table: \(errmsg)")
+            return errmsg
+        }
             if sqlite3_exec(db, "UPDATE Done SET main = code/100", nil, nil, nil) == SQLITE_OK {
                 return "ok"
             }else{
@@ -47,7 +67,6 @@ class SqliteUtil{
                 print("error update table: \(errmsg)")
                 return errmsg
             }
-        }
         return "none"
     }
     
@@ -101,7 +120,8 @@ class SqliteUtil{
     
     func insert(item:TodoItem, start:Int, span:Int,spnd:Float,desc:String) -> String{
         var stmt: OpaquePointer?
-        let queryString = "INSERT INTO Done (code,name,star,stop,span,spnd,desc) VALUES (\(item.code),'\(item.name)',\(start),strftime('%s','now'),\(span),\(spnd),'\(desc)')"
+        let main = item.code/100
+        let queryString = "INSERT INTO Done (main,code,name,star,stop,span,spnd,desc) VALUES (\(main),\(item.code),'\(item.name)',\(start),strftime('%s','now'),\(span),\(spnd),'\(desc)')"
         //print(queryString)
         if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
@@ -156,20 +176,38 @@ class SqliteUtil{
             let spnd = Double(sqlite3_column_double(stmt, 6))
             let alia = ""
             let desc = String(cString: sqlite3_column_text(stmt, 7))
-            let main = Int(sqlite3_column_int(stmt, 8))
-            //print("[\(id)]:c:\(code),n:\(name),s:\(start),e:\(stop),span:\(span)")
-            let d = DoneItem(id:id, code:code,name:name, star:star, stop:stop,span:span,spnd:Float(spnd), alia:alia, desc: desc)
-            
-            print("[\(d.id)],m:\(main),c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
+            //let main = Int(sqlite3_column_int(stmt, 8))
+            let d = DoneItem(id:id,code:code,name:name,star:star,stop:stop,span:span,spnd:Float(spnd), alia:alia, desc: desc)
+            //print("[\(d.id)],m:\(main),c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
             doneList.append(d)
             a += 1
         }
         return doneList
     }
+    func checkSpanSince(begin:Int) {
+        
+        let queryString = "SELECT code,name,star,stop,span,id FROM Done WHERE stop > \(begin) AND span > 600 and main in (0,2) ORDER BY code"
+        //statement pointer
+        var stmt:OpaquePointer?
+        //preparing the query
+        if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            print("\(errmsg)")
+        }
+        while(sqlite3_step(stmt) == SQLITE_ROW){
+            let code = Int(sqlite3_column_int(stmt, 0))
+            let name = String(cString: sqlite3_column_text(stmt, 1))
+            let star = Int(sqlite3_column_int(stmt, 2))
+            let stop = Int(sqlite3_column_int(stmt, 3))
+            let sums = Int(sqlite3_column_int(stmt, 4))
+            let id = Int(sqlite3_column_int(stmt, 5))
+            print("id:\(id),code:\(code),name:\(name),star:\(formateTime(interval:star)),stop:\(formateTime(interval:stop)),span:\(formateTime(interval:sums))")
+        }
+    }
     // calculate the amount of main class timespan for a peried time
     func sumMainClassSince(begin:Int)->[Int] {
         var aSum = [0,0,0,0,0,0,0]
-        let queryString = "SELECT main,SUM(span) sums FROM Done WHERE stop > \(begin) AND (code = 101 or main in (2,3,4,5,6)) GROUP BY main ORDER BY main"
+        let queryString = "SELECT main,SUM(span) sums FROM Done WHERE star > \(begin) AND main < 7 GROUP BY main ORDER BY main"
         //statement pointer
         var stmt:OpaquePointer?
         //preparing the query
@@ -185,6 +223,23 @@ class SqliteUtil{
             aSum[main] = sums
         }
         return aSum
+    }
+    func intoMainClassSince(begin:Int) {
+        let queryString = "SELECT code,SUM(span) sums FROM Done WHERE stop > \(begin) AND main < 7 GROUP BY code ORDER BY code"
+        //statement pointer
+        var stmt:OpaquePointer?
+        //preparing the query
+        if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            print("\(errmsg)")
+        }
+        while(sqlite3_step(stmt) == SQLITE_ROW){
+            let code = Int(sqlite3_column_int(stmt, 0))
+            let sums = Double(sqlite3_column_int(stmt, 1))
+            if sums > 0{
+            print("code:\(code),span:\(sums/3600.0)")
+            }
+        }
     }
     func backupData() ->Int {
         // server endpoint
