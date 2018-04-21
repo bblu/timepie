@@ -10,13 +10,15 @@ import Foundation
 import SQLite3
 
 class SqliteUtil{
-    func formateTime(interval:Int)->Date{
-        return Date(timeIntervalSince1970: Double(interval+3600*8))
+    let dateFmt = DateFormatter()
+    func formateTime(i:Int)->String{
+        dateFmt.dateFormat = "dd HH:mm"
+        return dateFmt.string(from: Date(timeIntervalSince1970: Double(i)))
     }
     private var db: OpaquePointer?
     private var addr = "http://127.0.0.1:8008"
     static let timePie = SqliteUtil()
-    
+
     private init(){
         //the database file
         let fileURL = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
@@ -90,6 +92,30 @@ class SqliteUtil{
             return "ok"
         }
     }
+    func updateLastCode(newCode:Int, name:String)->String{
+        var stmt: OpaquePointer?
+        var queryString = "SELECT id, code FROM Done order by id desc limit 1"
+        if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            return errmsg
+        }
+        if (sqlite3_step(stmt) != SQLITE_ROW){
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            return errmsg
+        }
+        let id = Int(sqlite3_column_int(stmt, 0))
+        let code = Int(sqlite3_column_int(stmt, 1))
+        if code == newCode{
+            return "ok"
+        }
+        queryString = "UPDATE Done SET code = \(code),name='\(name)' WHERE id=\(id)"
+        if sqlite3_exec(db, queryString, nil, nil, nil) != SQLITE_OK {
+            let errmsg = String(cString: sqlite3_errmsg(db)!)
+            return errmsg
+        }
+        return "ok"
+    }
+    
     func updateLastSpan(newSpan:Int)->String{
         var stmt: OpaquePointer?
         var queryString = "SELECT id,stop,span FROM Done order by id desc limit 1"
@@ -131,7 +157,7 @@ class SqliteUtil{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             return "failure inserting todo: \(errmsg)"
         }
-        return "|-[info]-[\(item.code):\(item.name)] for \(Int(Float(span)*0.01666667)+1)mins saved"
+        return "[\(item.code):\(item.name)] for \(Int(Float(span)*0.01666667)+1)mins \(spnd) \(desc) saved"
     }
     func getItemCount()->Int{
         let queryString = "SELECT count(id) FROM Done"
@@ -186,7 +212,7 @@ class SqliteUtil{
     }
     func checkSpanSince(begin:Int) {
         
-        let queryString = "SELECT code,name,star,stop,span,id FROM Done WHERE stop > \(begin) AND span > 600 and main in (0,2) ORDER BY code"
+        let queryString = "SELECT code,name,star,stop,span,id FROM Done WHERE stop > \(begin) AND span > 7200 and main in (0,2) ORDER BY id,code"
         //statement pointer
         var stmt:OpaquePointer?
         //preparing the query
@@ -199,9 +225,9 @@ class SqliteUtil{
             let name = String(cString: sqlite3_column_text(stmt, 1))
             let star = Int(sqlite3_column_int(stmt, 2))
             let stop = Int(sqlite3_column_int(stmt, 3))
-            let sums = Int(sqlite3_column_int(stmt, 4))
+            let sums = Double(sqlite3_column_int(stmt, 4))
             let id = Int(sqlite3_column_int(stmt, 5))
-            print("id:\(id),code:\(code),name:\(name),star:\(formateTime(interval:star)),stop:\(formateTime(interval:stop)),span:\(formateTime(interval:sums))")
+            print("id:\(id),code:\(code),name:\(name),[\(formateTime(i:star))~\(formateTime(i:stop))],span:\(sums/3600.0))")
         }
     }
     // calculate the amount of main class timespan for a peried time

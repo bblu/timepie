@@ -41,11 +41,11 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="24"/>
                                 <state key="normal" title="➕"/>
                                 <connections>
-                                    <action selector="add2Actions:" destination="BYZ-38-t0r" eventType="touchUpInside" id="3Bu-qf-Ijd"/>
+                                    <action selector="addDescription:" destination="BYZ-38-t0r" eventType="touchUpInside" id="F6q-TY-vyW"/>
                                 </connections>
                             </button>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="[123]coding:12:34" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="EMP-1p-J0Q">
-                                <rect key="frame" x="45" y="147" width="279" height="21"/>
+                                <rect key="frame" x="45" y="147" width="181" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <nil key="textColor"/>
@@ -57,12 +57,12 @@
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <textField opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="0.0" borderStyle="roundedRect" textAlignment="right" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="fOW-zd-kWV">
+                            <textField opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="right" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="fOW-zd-kWV">
                                 <rect key="frame" x="286" y="110" width="73" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <nil key="textColor"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="24"/>
-                                <textInputTraits key="textInputTraits"/>
+                                <textInputTraits key="textInputTraits" keyboardType="numberPad"/>
                             </textField>
                             <slider hidden="YES" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="60" minValue="0.0" maxValue="60" translatesAutoresizingMaskIntoConstraints="NO" id="LQ8-KS-ZQa">
                                 <rect key="frame" x="18" y="173" width="378" height="31"/>
@@ -112,6 +112,18 @@
                                 <color key="textColor" red="0.016804177310000001" green="0.19835099580000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="hZH-3u-BjK">
+                                <rect key="frame" x="20" y="211" width="374" height="487"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </tableView>
+                            <textField opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Gwi-SJ-7zc">
+                                <rect key="frame" x="220" y="143" width="139" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
@@ -138,10 +150,13 @@
                     <connections>
                         <outlet property="cancelEditButton" destination="Vkg-el-I1U" id="zXd-AP-Vz1"/>
                         <outlet property="curLabel" destination="0Xg-zl-bdP" id="3yc-63-AC2"/>
+                        <outlet property="descText" destination="Gwi-SJ-7zc" id="63r-4g-5g1"/>
+                        <outlet property="doneTableView" destination="hZH-3u-BjK" id="fWU-ak-ykt"/>
                         <outlet property="lastButton" destination="NFO-mR-hy7" id="ai0-jZ-zNr"/>
                         <outlet property="lastLabel" destination="EMP-1p-J0Q" id="vVu-cg-QSF"/>
                         <outlet property="logLabel" destination="l4f-2j-Xqg" id="K6P-ph-UEw"/>
                         <outlet property="spanSlider" destination="LQ8-KS-ZQa" id="ffo-SK-NEZ"/>
+                        <outlet property="spendText" destination="fOW-zd-kWV" id="Nht-2s-QS7"/>
                         <outlet property="statisticsLabel" destination="EWE-of-GjC" id="U4o-RO-rhT"/>
                         <outlet property="todoPickerView" destination="xSH-Xf-tUS" id="MQt-Zw-OW9"/>
                     </connections>
