@@ -138,7 +138,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         if(spanSlider.isHidden){
             tdLabel = getLabel(index: nextCode)
             curLabel.text = "\(tdPerfix)\(tdLabel) for 0:00"
-            selectNext(nextCode:nextCode)
+            if nextCode != currCode{
+                selectNext(nextCode:nextCode)
+            }
         }
     }
 
@@ -515,7 +517,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         if interval > (3600 * days){
             return String(format: "%.1fh", interval / (3600 * days))
         }
-        return String(format: "%.1fm", interval / (60 * days))
+        return String(format: "%.0fm", interval / (60 * days))
     }
     
 }
