@@ -143,6 +143,43 @@ class SqliteUtil{
         }
         return "ok"
     }
+    // @newSpan = -1
+    // @desc = ""
+    // @spnd = 0
+    func updateLast(newSpan:Int, newDesc:String = "", newSpnd:Float=0.0)->String{
+        var stmt: OpaquePointer?
+        var queryString = "SELECT id,stop,span FROM Done order by id desc limit 1"
+        if sqlite3_prepare(db, queryString, -1, &stmt, nil) != SQLITE_OK{
+            return "|-[error]-\(String(cString: sqlite3_errmsg(db)!))"
+        }
+        if (sqlite3_step(stmt) != SQLITE_ROW){
+            return "|-[error]-\(String(cString: sqlite3_errmsg(db)!))"
+        }
+        let id = Int(sqlite3_column_int(stmt, 0))
+        let stop = Int(sqlite3_column_int(stmt, 1))
+        let span = Int(sqlite3_column_int(stmt, 2))
+        //let spnd = Float(sqlite3_column_double(stmt, 3))
+        //let desc = String(cString: sqlite3_column_text(stmt, 4))
+        var msg = "|-[info]-"
+        if newSpan > 60{
+        let newStop = stop - (span - newSpan)
+            queryString = "UPDATE Done SET stop = \(newStop),span=\(newSpan) WHERE id=\(id)"
+            if sqlite3_exec(db, queryString, nil, nil, nil) == SQLITE_OK {
+                msg += "set span=\(newSpan), "
+            }else{
+                return "|-[error]-" + String(cString: sqlite3_errmsg(db)!)
+            }
+        }
+        if newDesc != "" || newSpnd > 0{
+            queryString = "UPDATE Done SET desc = '\(newDesc)',spnd=\(newSpnd) WHERE id=\(id)"
+            if sqlite3_exec(db, queryString, nil, nil, nil) == SQLITE_OK {
+                msg += "spnd=\(newSpnd), desc=\(newDesc)"
+            }else{
+                return "|-[error]-" + String(cString: sqlite3_errmsg(db)!)
+            }
+        }
+        return msg
+    }
     
     func insert(item:TodoItem, start:Int, span:Int,spnd:Float,desc:String) -> String{
         var stmt: OpaquePointer?
@@ -200,10 +237,9 @@ class SqliteUtil{
             let stop = Int(sqlite3_column_int(stmt, 4))
             let span = Int(sqlite3_column_int(stmt, 5))
             let spnd = Double(sqlite3_column_double(stmt, 6))
-            let alia = ""
             let desc = String(cString: sqlite3_column_text(stmt, 7))
             //let main = Int(sqlite3_column_int(stmt, 8))
-            let d = DoneItem(id:id,code:code,name:name,star:star,stop:stop,span:span,spnd:Float(spnd), alia:alia, desc: desc)
+            let d = DoneItem(id:id,code:code,name:name,star:star,stop:stop,span:span,spnd:Float(spnd), alia:"", desc: desc)
             //print("[\(d.id)],m:\(main),c:\(d.code),n:\(d.name),s:\(d.star),e:\(d.stop),span:\(d.span)")
             doneList.append(d)
             a += 1

@@ -15,6 +15,8 @@ struct UserInfoKeys{
     static let lastSpan = "lastSpan"
     static let storCode = "stor"
     static let storSpan = "storSpan"
+    static let storSpnd = "storSpnd"
+    static let storDesc = "storDesc"
     static let doneCount = "count"
     static let pickCache = "pickCache"
 }

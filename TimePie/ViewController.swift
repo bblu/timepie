@@ -32,7 +32,8 @@ extension Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: self))!
         //the start of week is sunday make it to monday
         let week = Calendar.current.date(byAdding: .day, value: 1, to: base)!
-        return week
+        if week < self { return week}
+        return Calendar.current.date(byAdding: .day, value: -6, to: base)!
     }
     var thisMonth: Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: self))!
@@ -73,6 +74,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     var lastSpan:Int = 0
     var storCode:Int = 0
     var storSpan:Int = 0
+    var storSpnd:Float = 0.0
+    var storDesc:String = ""
     
     //-----------------------
     //*UIPickerViewDataSource
@@ -124,7 +127,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             if(spanSlider.isHidden){
                 nextCode = select0 * 100 + pickCache[row]
             }else{
-                changeLastCode(code: select0 * 100 + pickCache[row])
+                setLastCode(code: select0 * 100 + pickCache[row])
             }
         }else{
             if(spanSlider.isHidden){
@@ -132,7 +135,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 stdUserDefaults.set(pickCache, forKey: UserInfoKeys.pickCache)
                 nextCode = select0 * 100 + row
             }else{
-                changeLastCode(code:select0 * 100 + row)
+                setLastCode(code:select0 * 100 + row)
             }
         }
         if(spanSlider.isHidden){
@@ -161,6 +164,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         //print("pickCache.count = \(pickCache.count)")
         storCode = stdUserDefaults.integer(forKey: UserInfoKeys.storCode)
         storSpan = stdUserDefaults.integer(forKey: UserInfoKeys.storSpan)
+        storSpnd = stdUserDefaults.float(forKey: UserInfoKeys.storSpnd)
+        storDesc = stdUserDefaults.string(forKey: UserInfoKeys.storDesc)!
         lastStar = stdUserDefaults.integer(forKey: UserInfoKeys.startTime)
         lastCode = storCode
         lastSpan = storSpan
@@ -300,18 +305,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         }
         statisticsLabel.text = statistics
     }
-    func changeLastCode(code:Int){
-        let lastName = tdData[code]!.name
-        let msg = db.updateLastCode(newCode: code, name:lastName)
-        if msg == "ok" {
-            lastCode = code
-            storCode = code
-            flushLastLabel()
-            uiLogInfo(msg: "set lastCode = \(lastCode), lastName = \(lastName)")
-        }else{
-            uiLogError(msg: msg)
-        }
-    }
+
     
     @IBAction func changeLastSpan(_ sender: UIButton) {
         if lastSpan < minTimespan{
@@ -326,21 +320,27 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             setPickerViewTo(code:storCode)
         }else{
             //save Edit
-            let newSpan = Int(spanSlider.value)
-            if abs(storSpan - newSpan) > minTimespan{
-                let msg = db.updateLastSpan(newSpan: newSpan)
-                if msg == "ok" {
-                    lastStar -= storSpan - newSpan
-                    tmCounter += storSpan - newSpan
-                    storSpan = newSpan
-                    lastSpan = newSpan
-                    stdUserDefaults.set(lastStar, forKey: UserInfoKeys.startTime)
-                    stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.lastSpan)
-                    stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.storSpan)
-                    uiLogInfo(msg: "set last[\(lastCode):\(tdData[lastCode]!.name)] time span to \(Int(newSpan/60))min")
-                }else{
-                    uiLogError(msg: msg)
+            var newSpan = -1
+            if abs(storSpan - Int(spanSlider.value)) > minTimespan{
+                newSpan = Int(spanSlider.value)
+            }
+            let txtSpnd = spendText.text!
+            let newDesc = descText.text!
+            let newSpnd = (txtSpnd as NSString).floatValue
+            let log = db.updateLast(newSpan: newSpan, newDesc: newDesc, newSpnd: newSpnd)
+            if newSpnd>0 || newDesc != ""{
+                let flag = log.prefix(4).suffix(1)
+                //"|-[info]-"
+                if flag == "i" {
+                    storSpnd = newSpnd
+                    storDesc = newDesc
+                    stdUserDefaults.set(storSpnd, forKey: UserInfoKeys.storSpnd)
+                    stdUserDefaults.set(storDesc, forKey: UserInfoKeys.storDesc)
+                    spendText.text = ""
+                    descText.text = ""
+                    descText.isHidden = true
                 }
+                uiLog(log: log)
             }
             flushLastLabel()
             lastButton.setTitle("⚙️",for:UIControlState.normal)
@@ -433,7 +433,35 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         storeUserInfo()
         tmCounter = 0
     }
-    
+    func setLastCode(code:Int){
+        let lastName = tdData[code]!.name
+        let msg = db.updateLastCode(newCode: code, name:lastName)
+        if msg == "ok" {
+            lastCode = code
+            storCode = code
+            flushLastLabel()
+            uiLogInfo(msg: "set lastCode = \(lastCode), lastName = \(lastName)")
+        }else{
+            uiLogError(msg: msg)
+        }
+    }
+    func setLastSpan(newSpan:Int){
+        let log = db.updateLast(newSpan: newSpan)
+        let flag = log.prefix(4).suffix(1)
+        print(flag)
+        //"|-[info]-"
+        if flag == "i" {
+            lastStar -= storSpan - newSpan
+            tmCounter += storSpan - newSpan
+            storSpan = newSpan
+            lastSpan = newSpan
+            stdUserDefaults.set(lastStar, forKey: UserInfoKeys.startTime)
+            stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.lastSpan)
+            stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.storSpan)
+            //uiLogInfo(msg: "set last[\(lastCode):\(tdData[lastCode]!.name)] time span to \(Int(newSpan/60))min")
+        }
+        uiLog(log: log)
+    }
     @objc func UpdateTimer(){
         tmCounter += 1
         curLabel.text = tdPerfix + tdLabel + " for " + formateTime(interval:tmCounter)
