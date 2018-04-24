@@ -14,13 +14,15 @@ extension Date {
     var dayOfWeek: Int {
         // returns an integer from 1 - 7, with 1 being Sunday and 7 being Saturday
         let dow = Calendar.current.dateComponents([.weekday], from: self).weekday!
-        if dow == 1 {
-            return 7
-        }
-        return dow - 1
+        //print("dow=\(dow) dayofweek=\(dow-1)")
+        return dow==1 ? 7 : dow - 1
+    }
+    func dayOfWeek(start:Date) -> Int {
+        let dow = Calendar.current.dateComponents([.weekday], from: start).weekday!
+        return dow==1 ? 7 : dow - 1
     }
     var dayOfMonth:Int{
-        return Calendar.current.component(.day, from: self)
+        return Calendar.current.component(.day, from: self) - 1
     }
     var thisDay: Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month, .day], from: self))!
@@ -165,7 +167,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         storCode = stdUserDefaults.integer(forKey: UserInfoKeys.storCode)
         storSpan = stdUserDefaults.integer(forKey: UserInfoKeys.storSpan)
         storSpnd = stdUserDefaults.float(forKey: UserInfoKeys.storSpnd)
-        storDesc = stdUserDefaults.string(forKey: UserInfoKeys.storDesc)!
+        let desc = stdUserDefaults.string(forKey: UserInfoKeys.storDesc)
+        storDesc = desc == nil ? "" : desc!
         lastStar = stdUserDefaults.integer(forKey: UserInfoKeys.startTime)
         lastCode = storCode
         lastSpan = storSpan
@@ -194,6 +197,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 let data = try Data(contentsOf: URL(fileURLWithPath: path), options: .mappedIfSafe)
                 let decoder = JSONDecoder()
                 let todoConfig = try decoder.decode(TodoConfig.self, from: data)
+                spendText.placeholder = "¥"
                 print(todoConfig.user)
                 timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(UpdateTimer),
                                              userInfo: nil, repeats: true)
@@ -264,48 +268,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         self.view.endEditing(true)
     }
     @IBAction func staticSpanChanged(_ sender: UISegmentedControl) {
-        let index = sender.selectedSegmentIndex
-        var begin:Date = Date().thisDay
-        let weekends = Date().dayOfWeek
-        var days = 1
-        var weekdays = 1
-        
-        if index == 0{
-        }else{
-            if index == 1{
-                begin = Date().thisWeek
-                days = Date().dayOfWeek
-                days += Calendar.current.component(.hour, from: Date()) > 18 ? 1 : 0
-                weekdays = days > 5 ? 5 : days
-            } else if index == 2 {
-                begin = Date().thisMonth
-                days = Date().dayOfMonth
-                days += Calendar.current.component(.hour, from: Date()) > 18 ? 1 : 0
-                weekdays = weekdaysByNow(dayofweek: weekends, days: days)
-            }
-        }
-        todoPickerView.isHidden = index > 0
-        doneTableView.isHidden = index < 1
-        //db.intoMainClassSince(begin:Int(begin.timeIntervalSince1970))
-        db.checkSpanSince(begin: Int(begin.timeIntervalSince1970))
-        dateFmt.dateFormat = "YYYY-MM-dd"
-        uiLogInfo(msg: "from=\(dateFmt.string(from:begin)), days=\(days), weekdays=\(weekdays)")
-        //return
-        let sumMain = db.sumMainClassSince(begin:Int(begin.timeIntervalSince1970))
-        var statistics = ""
-        for (main,sum) in sumMain.enumerated(){
-            //print("\(main):\(Double(sum)/3600.0)")
-            if  sum > 0 {
-                if main == 3{
-                    statistics += "\(tdData[main*100]!.icon)\(shortTime(interval: Double(sum), days:Double(weekdays))) "
-                }else{
-                    statistics += "\(tdData[main*100]!.icon)\(shortTime(interval: Double(sum), days:Double(days))) "
-                }
-            }
-        }
-        statisticsLabel.text = statistics
+        genStatistics(index: sender.selectedSegmentIndex)
     }
-
     
     @IBAction func changeLastSpan(_ sender: UIButton) {
         if lastSpan < minTimespan{
@@ -327,25 +291,23 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             let txtSpnd = spendText.text!
             let newDesc = descText.text!
             let newSpnd = (txtSpnd as NSString).floatValue
-            let log = db.updateLast(newSpan: newSpan, newDesc: newDesc, newSpnd: newSpnd)
-            if newSpnd>0 || newDesc != ""{
-                let flag = log.prefix(4).suffix(1)
-                //"|-[info]-"
-                if flag == "i" {
-                    storSpnd = newSpnd
-                    storDesc = newDesc
-                    stdUserDefaults.set(storSpnd, forKey: UserInfoKeys.storSpnd)
-                    stdUserDefaults.set(storDesc, forKey: UserInfoKeys.storDesc)
-                    spendText.text = ""
-                    descText.text = ""
-                    descText.isHidden = true
+            if newSpan > 0 || newSpnd>0 || newDesc != ""{
+                let log = db.updateLast(newSpan: newSpan, newDesc: newDesc, newSpnd: newSpnd)
+                if "i" == log.prefix(4).suffix(1){
+                    if newSpan > 0{
+                        updateLastSpanData(newSpan:newSpan)
+                    }
+                    if newSpnd>0 || newDesc != ""{
+                        updateLastSpndDesc(newSpnd: newSpnd, newDesc: newDesc)
+                    }
                 }
                 uiLog(log: log)
+                flushLastLabel()
             }
-            flushLastLabel()
             lastButton.setTitle("⚙️",for:UIControlState.normal)
             setPickerViewTo(code: currCode)
         }
+        statisticsLabel.isHidden = spanSlider.isHidden
         spanSlider.isHidden = !spanSlider.isHidden
         cancelEditButton.isHidden = spanSlider.isHidden
     }
@@ -354,11 +316,14 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         lastButton.setTitle("⚙️",for:UIControlState.normal)
         spanSlider.isHidden = true
         sender.isHidden = true
+        statisticsLabel.isHidden = false
     }
     @IBAction func lastSpanSlider(_ sender: UISlider) {
         let val = Int(sender.value)
-        let loc = lastStar + val + ViewController.localOffset
-        lastLabel.text = "[\(doneAmount)]\(tdData[storCode]!.name):\(formateTime(interval: val)) -> \(formateTime(interval:loc))"
+        dateFmt.dateFormat = "H:mm:ss"
+        let loc = dateFmt.string(from: Date(timeIntervalSince1970: Double(lastStar + val + ViewController.localOffset)))
+        lastLabel.text = "[\(doneAmount)]\(tdData[storCode]!.name):\(formateTime(interval:val)) -> \(loc)"
+        
     }
     
     @IBAction func backupData(_ sender: Any) {
@@ -421,46 +386,93 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         lastSpan = span
         currCode = nextCode
         if span > minTimespan {
+            let item = tdData[lastCode]!
             let txtSpnd = spendText.text!
             let txtDesc = descText.text!
             let spnd = (txtSpnd as NSString).floatValue
-            uiLogInfo(msg: db.insert(item: tdData[lastCode]!,
-                    start: lastStar, span: lastSpan,spnd:spnd,desc:txtDesc))
-            increaseDoneAmount()
+            let msg = db.insert(item:item ,start: lastStar, span: lastSpan,spnd:spnd,desc:txtDesc)
+            if msg == "ok"{
+                increaseDoneAmount()
+                uiLogInfo(msg:"[\(item.code):\(item.name)] for \(Int(Float(span)*0.01666667)+1)mins \(spnd) \(txtDesc) saved")
+                spendText.text = ""
+                if descText.isHidden{
+                    descText.text = ""
+                }
+            }else{
+                uiLogError(msg: msg)
+            }
             lastStar = now
         }
         //print("|-[info]-stor:\(tdData[storCode]!.name) last=\(tdData[lastCode]!.name)")
         storeUserInfo()
         tmCounter = 0
     }
+    
+    func genStatistics(index:Int){
+        var begin:Date = Date().thisDay
+        var days = 1
+        var weekdays = 1
+        if index > 0{
+            let today = Calendar.current.component(.hour, from: Date()) > 18 ? 1 : 0
+            if index == 1{
+                begin = Date().thisWeek
+                days = Date().dayOfWeek - 1 + today
+                weekdays = days > 5 ? 5 : days
+            } else if index == 2 {
+                begin = Date().thisMonth
+                days = Date().dayOfMonth + today
+                weekdays = weekdaysByNow(dayofweek: Date().dayOfWeek(start:begin), days: days)
+            }
+        }
+        todoPickerView.isHidden = index > 0
+        doneTableView.isHidden = index < 1
+        //db.intoMainClassSince(begin:Int(begin.timeIntervalSince1970))
+        //db.checkSpanSince(begin: Int(begin.timeIntervalSince1970))
+        dateFmt.dateFormat = "MM-dd HH:mm"
+        uiLogInfo(msg: "from=\(dateFmt.string(from:begin)), days=\(days), weekdays=\(weekdays)")
+        //return
+        let sumMain = db.sumMainClassSince(begin:Int(begin.timeIntervalSince1970))
+        var statistics = ""
+        for (main,sum) in sumMain.enumerated(){
+            //print("\(main):\(Double(sum)/3600.0)")
+            if  sum > 0 {
+                if main == 3{
+                    statistics += "\(tdData[main*100]!.icon)\(shortTime(interval: Double(sum), days:Double(weekdays))) "
+                }else{
+                    statistics += "\(tdData[main*100]!.icon)\(shortTime(interval: Double(sum), days:Double(days))) "
+                }
+            }
+        }
+        statisticsLabel.text = statistics
+    }
     func setLastCode(code:Int){
-        let lastName = tdData[code]!.name
-        let msg = db.updateLastCode(newCode: code, name:lastName)
+        let msg = db.updateLastCode(newCode: code, name:tdData[code]!.name)
         if msg == "ok" {
             lastCode = code
             storCode = code
             flushLastLabel()
-            uiLogInfo(msg: "set lastCode = \(lastCode), lastName = \(lastName)")
+            uiLogInfo(msg: "set lastCode = \(lastCode), lastName = \(tdData[code]!.name)")
         }else{
             uiLogError(msg: msg)
         }
     }
-    func setLastSpan(newSpan:Int){
-        let log = db.updateLast(newSpan: newSpan)
-        let flag = log.prefix(4).suffix(1)
-        print(flag)
-        //"|-[info]-"
-        if flag == "i" {
-            lastStar -= storSpan - newSpan
-            tmCounter += storSpan - newSpan
-            storSpan = newSpan
-            lastSpan = newSpan
-            stdUserDefaults.set(lastStar, forKey: UserInfoKeys.startTime)
-            stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.lastSpan)
-            stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.storSpan)
-            //uiLogInfo(msg: "set last[\(lastCode):\(tdData[lastCode]!.name)] time span to \(Int(newSpan/60))min")
-        }
-        uiLog(log: log)
+    func updateLastSpanData(newSpan:Int){
+        lastStar -= storSpan - newSpan
+        tmCounter += storSpan - newSpan
+        storSpan = newSpan
+        lastSpan = newSpan
+        stdUserDefaults.set(lastStar, forKey: UserInfoKeys.startTime)
+        stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.lastSpan)
+        stdUserDefaults.set(lastSpan, forKey: UserInfoKeys.storSpan)
+    }
+    func updateLastSpndDesc(newSpnd:Float, newDesc:String){
+        storSpnd = newSpnd
+        storDesc = newDesc
+        stdUserDefaults.set(storSpnd, forKey: UserInfoKeys.storSpnd)
+        stdUserDefaults.set(storDesc, forKey: UserInfoKeys.storDesc)
+        spendText.text = ""
+        descText.text = ""
+        descText.isHidden = true
     }
     @objc func UpdateTimer(){
         tmCounter += 1
@@ -520,13 +532,11 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         var weekdays = 0
         var w = dayofweek
         for _ in (1...days){
-            if w < 6 {
+            w = w % 7
+            if 0 < w && w < 6{
                 weekdays += 1
             }
             w += 1
-            if w == 8 {
-                w = 1
-            }
         }
         return weekdays
     }
@@ -539,13 +549,13 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         let hh = ha % 24
         let mm = ma % 60
         let ss = interval % 60
-        return String(format: "%02d:%02d:%02d", hh, mm, ss)
+        return String(format: "%d:%d:%02d", hh, mm, ss)
     }
     func shortTime(interval:Double,days:Double)->String{
         if interval > (3600 * days){
-            return String(format: "%.1fh", interval / (3600 * days))
+            return String(format: "%.1f", interval / (3600 * days))
         }
-        return String(format: "%.0fm", interval / (60 * days))
+        return String(format: "%.0f", interval / (60 * days))
     }
     
 }

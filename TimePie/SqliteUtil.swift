@@ -158,27 +158,27 @@ class SqliteUtil{
         let id = Int(sqlite3_column_int(stmt, 0))
         let stop = Int(sqlite3_column_int(stmt, 1))
         let span = Int(sqlite3_column_int(stmt, 2))
-        //let spnd = Float(sqlite3_column_double(stmt, 3))
-        //let desc = String(cString: sqlite3_column_text(stmt, 4))
+
         var msg = "|-[info]-"
-        if newSpan > 60{
-        let newStop = stop - (span - newSpan)
-            queryString = "UPDATE Done SET stop = \(newStop),span=\(newSpan) WHERE id=\(id)"
-            if sqlite3_exec(db, queryString, nil, nil, nil) == SQLITE_OK {
-                msg += "set span=\(newSpan), "
-            }else{
-                return "|-[error]-" + String(cString: sqlite3_errmsg(db)!)
-            }
+        queryString = "UPDATE Done SET "
+        if newSpan > 60 {
+            let newStop = stop - (span - newSpan)
+            queryString += "stop = \(newStop),span=\(newSpan)"
+            msg += "set span=" + String(format: "%.0fm", Double(newSpan) / 60.0)
         }
         if newDesc != "" || newSpnd > 0{
-            queryString = "UPDATE Done SET desc = '\(newDesc)',spnd=\(newSpnd) WHERE id=\(id)"
-            if sqlite3_exec(db, queryString, nil, nil, nil) == SQLITE_OK {
-                msg += "spnd=\(newSpnd), desc=\(newDesc)"
-            }else{
-                return "|-[error]-" + String(cString: sqlite3_errmsg(db)!)
+            if newSpan > 60 {
+                queryString += ", "
+                msg += ", "
             }
+            queryString += "desc = '\(newDesc)',spnd=\(newSpnd) "
+            msg += "spnd=\(newSpnd), desc=\(newDesc)"
         }
-        return msg
+        queryString += " WHERE id=\(id)"
+        if sqlite3_exec(db, queryString, nil, nil, nil) == SQLITE_OK {
+            return msg
+        }
+        return "|-[error]-" + String(cString: sqlite3_errmsg(db)!)
     }
     
     func insert(item:TodoItem, start:Int, span:Int,spnd:Float,desc:String) -> String{
@@ -192,9 +192,9 @@ class SqliteUtil{
         }
         if sqlite3_step(stmt) != SQLITE_DONE {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
-            return "failure inserting todo: \(errmsg)"
+            return "|-[error]: \(errmsg)"
         }
-        return "[\(item.code):\(item.name)] for \(Int(Float(span)*0.01666667)+1)mins \(spnd) \(desc) saved"
+        return "ok"
     }
     func getItemCount()->Int{
         let queryString = "SELECT count(id) FROM Done"
@@ -248,7 +248,7 @@ class SqliteUtil{
     }
     func checkSpanSince(begin:Int) {
         
-        let queryString = "SELECT code,name,star,stop,span,id FROM Done WHERE stop > \(begin) AND span > 7200 and main in (0,2) ORDER BY id,code"
+        let queryString = "SELECT code,name,star,stop,span,id FROM Done WHERE stop > \(begin) AND span > 3600 and main in (0,2) ORDER BY id,code"
         //statement pointer
         var stmt:OpaquePointer?
         //preparing the query
