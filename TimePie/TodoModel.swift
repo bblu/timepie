@@ -35,6 +35,11 @@ struct TodoItem: Decodable{
     var span:Int
 }
 
+struct PickItem{
+    let name:String
+    let code:Int
+}
+
 struct DoneList: Encodable{
     let items:[DoneItem]
 }

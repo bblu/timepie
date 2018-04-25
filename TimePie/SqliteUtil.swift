@@ -32,7 +32,10 @@ class SqliteUtil{
     }
     
     func createTableDone()->String{
-        if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Done (id INTEGER PRIMARY KEY AUTOINCREMENT,code INTEGER, name TEXT,star INTEGER,stop INTEGER, span INTEGER,spnd decimal(8,2),desc TEXT)", nil, nil, nil) != SQLITE_OK {
+        if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Done (id INTEGER PRIMARY KEY AUTOINCREMENT,main INTEGER,code INTEGER, name TEXT,star INTEGER,stop INTEGER, span INTEGER,spnd decimal(8,2),desc TEXT)", nil, nil, nil) == SQLITE_OK {
+            sqlite3_exec(db, "CREATE INDEX index_main ON Done (main);", nil, nil, nil)
+            sqlite3_exec(db, "CREATE INDEX index_code ON Done (code);", nil, nil, nil)
+        }else{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             print("error creating table: \(errmsg)")
             return errmsg
@@ -43,7 +46,6 @@ class SqliteUtil{
     func alterCodeByName(name:String, code:Int){
         if sqlite3_exec(db, "UPDATE Done SET code = \(code) WHERE name='\(name)'", nil, nil, nil) == SQLITE_OK {
             print("set \(name) code=\(code)")
-            
         }else{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             print("error update table: \(errmsg)")
@@ -51,8 +53,7 @@ class SqliteUtil{
     }
     
     func alterTableDone()->String {
-        //sqlite3_exec(db, "CREATE INDEX index_main ON Done (main);", nil, nil, nil)
-        //sqlite3_exec(db, "CREATE INDEX index_code ON Done (code);", nil, nil, nil)
+
         //if sqlite3_exec(db, "UPDATE Done SET span = 10800 WHERE id=362", nil, nil, nil) == SQLITE_OK {}
         if sqlite3_exec(db, "DELETE from Done WHERE id=407", nil, nil, nil) == SQLITE_OK {
             print("DELETE form Done WHERE id=407")
