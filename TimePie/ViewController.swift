@@ -22,7 +22,11 @@ extension Date {
         return dow==1 ? 7 : dow - 1
     }
     var dayOfMonth:Int{
-        return Calendar.current.component(.day, from: self) - 1
+        return Calendar.current.component(.day, from: self)
+    }
+    var daysOfLastMonth:Int{
+        let diffCom = Calendar.current.dateComponents([.day], from: self.lastMonth, to: self)
+        return diffCom.day!
     }
     var thisDay: Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month, .day], from: self))!
@@ -41,6 +45,10 @@ extension Date {
         let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: self))!
         //let month = Calendar.current.date(byAdding: .hour, value: 8, to: base)!
         return base
+    }
+    var lastMonth: Date {
+        let base = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: self))!
+        return Calendar.current.date(byAdding: .month, value: -1, to: base)!
     }
 }
 
@@ -76,7 +84,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     var storSpan:Int = 0
     var storSpnd:Float = 0.0
     var storDesc:String = ""
-    let langIsEn = false
+    let langIsEn = true
     
     //-----------------------
     //*UIPickerViewDataSource
@@ -420,7 +428,12 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 weekdays = days > 5 ? 5 : days
             } else if index == 2 {
                 begin = Date().thisMonth
-                days = Date().dayOfMonth + today
+                days = Date().dayOfMonth - 1 + today
+                //from the very beginning of the month count last month data
+                if days < 4{
+                    begin = Date().lastMonth
+                    days = Date().daysOfLastMonth + days
+                }
                 weekdays = weekdaysByNow(dayofweek: Date().dayOfWeek(start:begin), days: days)
             }
         }
@@ -537,7 +550,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     func weekdaysByNow(dayofweek:Int, days:Int)->Int{
         var weekdays = 0
         var w = dayofweek
-        for _ in (1...days){
+        for _ in (0...days){
             w = w % 7
             if 0 < w && w < 6{
                 weekdays += 1

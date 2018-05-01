@@ -33,8 +33,8 @@ class SqliteUtil{
     
     func createTableDone()->String{
         if sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS Done (id INTEGER PRIMARY KEY AUTOINCREMENT,main INTEGER,code INTEGER, name TEXT,star INTEGER,stop INTEGER, span INTEGER,spnd decimal(8,2),desc TEXT)", nil, nil, nil) == SQLITE_OK {
-            sqlite3_exec(db, "CREATE INDEX index_main ON Done (main);", nil, nil, nil)
-            sqlite3_exec(db, "CREATE INDEX index_code ON Done (code);", nil, nil, nil)
+            //sqlite3_exec(db, "CREATE INDEX index_main ON Done (main);", nil, nil, nil)
+            //sqlite3_exec(db, "CREATE INDEX index_code ON Done (code);", nil, nil, nil)
         }else{
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             print("error creating table: \(errmsg)")
