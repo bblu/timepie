@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import EventKit
 import AudioToolbox
 
 extension Date {
@@ -68,7 +69,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     static let localOffset = 28800
     let dateFmt = DateFormatter()
-    let minTimespan = 60
+    let minTimespan = 6
     let stdUserDefaults = UserDefaults.standard
     let db = SqliteUtil.timePie
     var doneAmount:Int = 0
@@ -275,9 +276,6 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     
     @IBAction func changeLastSpan(_ sender: UIButton) {
-        if lastSpan < minTimespan{
-            uiLogInfo(msg: "timespan is too short to reset")
-        }
         if spanSlider.isHidden{
             //start Edit
             let maxValue:Float = Float(storSpan)
@@ -290,6 +288,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             var newSpan = -1
             if abs(storSpan - Int(spanSlider.value)) > minTimespan{
                 newSpan = Int(spanSlider.value)
+            }else{
+                uiLogInfo(msg: "timespan is too short to reset")
             }
             let txtSpnd = spendText.text!
             let newDesc = descText.text!
@@ -299,6 +299,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 if "i" == log.prefix(4).suffix(1){
                     if newSpan > 0{
                         updateLastSpanData(newSpan:newSpan)
+                        storSpan = newSpan
                     }
                     if newSpnd>0 || newDesc != ""{
                         updateLastSpndDesc(newSpnd: newSpnd, newDesc: newDesc)
@@ -322,10 +323,10 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         statisticsLabel.isHidden = false
     }
     @IBAction func lastSpanSlider(_ sender: UISlider) {
-        storSpan = Int(sender.value)
+        lastSpan = Int(sender.value)
         dateFmt.dateFormat = "H:mm:ss"
         //+ ViewController.localOffset
-        let loc = dateFmt.string(from: Date(timeIntervalSince1970: Double(lastStar + storSpan )))
+        let loc = dateFmt.string(from: Date(timeIntervalSince1970: Double(lastStar + lastSpan )))
         flushLastLabel(extra:"->\(loc)")
     }
     
@@ -400,6 +401,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             let spnd = (txtSpnd as NSString).floatValue
             let msg = db.insert(item:item ,start: lastStar, span: lastSpan,spnd:spnd,desc:txtDesc)
             if msg == "ok"{
+                addEventToCalendar(item: item, start: lastStar, desc: txtDesc,spnd:spnd, span:span)
                 increaseDoneAmount()
                 uiLogInfo(msg:"[\(item.code):\(item.name)] for \(Int(Float(span)*0.01666667)+1)mins \(spnd) \(txtDesc) saved")
                 spendText.text = ""
@@ -457,6 +459,77 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             }
         }
         statisticsLabel.text = statistics
+    }
+    func addEventToCalendar(item:TodoItem, start:Int,desc:String,spnd:Float,span:Int){
+        var title = item.name
+        if !langIsEn{
+            title = item.alias
+        }
+        let calName = todoItems[item.code/100*100]!.name
+        let auth = checkAuth()
+        if !auth {
+            uiLogInfo(msg: "Not allowed to access Calendar")
+            return
+        }
+        let eventStore = EKEventStore()
+        var calendarForEvent = eventStore.defaultCalendarForNewEvents
+        let calendars = eventStore.calendars(for: EKEntityType.event) as [EKCalendar]
+        var hasCalendar = false
+        for cal in calendars{
+            print(cal.title)
+            if cal.title == calName{
+                hasCalendar = true
+                calendarForEvent = cal
+            }
+        }
+        if !hasCalendar{
+            //let tmpCal = EKCalendar(for: .event, eventStore: eventStore)
+            //tmpCal.title = "timepie"
+            //tmpCal.source = eventStore.defaultCalendarForNewEvents?.source
+            //let ret = eventStore.saveCalendar(<#T##calendar: EKCalendar##EKCalendar#>, commit: <#T##Bool#>)
+        }else{
+            let doneEvent = EKEvent(eventStore: eventStore)
+            doneEvent.calendar = calendarForEvent
+            doneEvent.title = title
+            doneEvent.startDate = Date(timeIntervalSince1970: Double(start))
+            doneEvent.endDate   = Date()
+            var notes = "{code:\(item.code),span:\(Int(Double(span)/60.0))"
+            if desc != "" {
+                notes += ",desc:\(desc)"
+            }
+            if spnd > 0 {
+                notes += ",spnd:\(spnd)"
+            }
+            doneEvent.notes = notes + "}"
+            do{
+                try eventStore.save(doneEvent, span: .thisEvent, commit: true)
+                print("saved event id = \(doneEvent.eventIdentifier)")
+            }catch{
+                uiLogError(msg: "add Event to calendar failed!")
+            }
+        }
+        
+    }
+    func checkAuth()->Bool{
+        let eventStore = EKEventStore()
+        switch EKEventStore.authorizationStatus(for: .event) {
+        case .authorized:
+            return true
+        case .denied:
+            print("Access denied")
+            return false
+        case .notDetermined:
+            eventStore.requestAccess(to: .event, completion: { (granted: Bool, NSError) -> Void in
+                if granted {
+                    print("Access Ok")
+                }else{
+                    print("Access denied")
+                }
+            })
+        default:
+            return false
+        }
+        return true
     }
     func setLastCode(code:Int){
         let msg = db.updateLastCode(newCode: code, name:todoItems[code]!.name)
@@ -518,9 +591,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     func flushLastLabel(extra:String=""){
         if(langIsEn){
-            lastLabel.text = "[\(doneAmount)]\(todoItems[storCode]!.name):\(formateTime(interval: storSpan))"
+            lastLabel.text = "[\(doneAmount)]\(todoItems[storCode]!.name):\(formateTime(interval: lastSpan))"
         }else{
-            lastLabel.text = "[\(doneAmount)]\(todoItems[storCode]!.alias):\(formateTime(interval: storSpan))"
+            lastLabel.text = "[\(doneAmount)]\(todoItems[storCode]!.alias):\(formateTime(interval: lastSpan))"
         }
         if extra != ""{
             lastLabel.text =  lastLabel.text! + extra
