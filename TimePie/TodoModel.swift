@@ -12,6 +12,7 @@ struct UserInfoKeys{
     static let todoCode = "code"
     static let startTime = "start"
     static let lastCode = "last"
+    static let lastApId = "lastApId"
     static let lastSpan = "lastSpan"
     static let storCode = "stor"
     static let storSpan = "storSpan"

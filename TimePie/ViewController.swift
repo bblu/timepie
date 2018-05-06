@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import EventKit
+
 import AudioToolbox
 
 extension Date {
@@ -71,7 +71,10 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     let dateFmt = DateFormatter()
     let minTimespan = 6
     let stdUserDefaults = UserDefaults.standard
+    
     let db = SqliteUtil.timePie
+    let ap = CalendarUtil()
+    
     var doneAmount:Int = 0
     var timer = Timer()
     var tmCounter:Int = 0
@@ -304,8 +307,16 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                     if newSpnd>0 || newDesc != ""{
                         updateLastSpndDesc(newSpnd: newSpnd, newDesc: newDesc)
                     }
+                }else{
+                    uiLog(log: log)
                 }
-                uiLog(log: log)
+                let lastApId = stdUserDefaults.string(forKey: UserInfoKeys.lastApId)
+                if lastApId != nil && lastApId != ""{
+                    let calName = todoItems[storCode/100*100]!.name
+                    let apId = lastApId!
+                    let msg = ap.updateLastCalendar(calendar: calName, apId: apId, newSpan: newSpan, newDesc: newDesc, newSpnd: newSpnd)
+                    uiLog(log:msg)
+                }
                 flushLastLabel()
             }
             lastButton.setTitle("⚙️",for:UIControlState.normal)
@@ -331,6 +342,12 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     
     @IBAction func backupData(_ sender: Any) {
+        //let items = db.getItem()
+        //for item in items{
+        //    addEventToCalendar(item: todoItems[item.code]!, start:item.star, desc: item.desc, spnd: item.spnd, span: item.span,stop:item.stop)
+        //    print("bkup for \(item.code):\(item.name)-\(item.span)")
+        //}
+        //return
         //todo 异步调用连接超时的问题
         doneAmount = db.backupData()
         if doneAmount < 0 {
@@ -398,19 +415,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             let item = todoItems[lastCode]!
             let txtSpnd = spendText.text!
             let txtDesc = descText.text!
-            let spnd = (txtSpnd as NSString).floatValue
-            let msg = db.insert(item:item ,start: lastStar, span: lastSpan,spnd:spnd,desc:txtDesc)
-            if msg == "ok"{
-                addEventToCalendar(item: item, start: lastStar, desc: txtDesc,spnd:spnd, span:span)
-                increaseDoneAmount()
-                uiLogInfo(msg:"[\(item.code):\(item.name)] for \(Int(Float(span)*0.01666667)+1)mins \(spnd) \(txtDesc) saved")
-                spendText.text = ""
-                if descText.isHidden{
-                    descText.text = ""
-                }
-            }else{
-                uiLogError(msg: msg)
-            }
+            let fltSpnd = (txtSpnd as NSString).floatValue
+            saveLastItem(item: item, spnd: fltSpnd, desc: txtDesc)
             lastStar = now
         }
         //print("|-[info]-stor:\(tdData[storCode]!.name) last=\(tdData[lastCode]!.name)")
@@ -460,77 +466,33 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         }
         statisticsLabel.text = statistics
     }
-    func addEventToCalendar(item:TodoItem, start:Int,desc:String,spnd:Float,span:Int){
-        var title = item.name
-        if !langIsEn{
-            title = item.alias
-        }
-        let calName = todoItems[item.code/100*100]!.name
-        let auth = checkAuth()
-        if !auth {
-            uiLogInfo(msg: "Not allowed to access Calendar")
-            return
-        }
-        let eventStore = EKEventStore()
-        var calendarForEvent = eventStore.defaultCalendarForNewEvents
-        let calendars = eventStore.calendars(for: EKEntityType.event) as [EKCalendar]
-        var hasCalendar = false
-        for cal in calendars{
-            print(cal.title)
-            if cal.title == calName{
-                hasCalendar = true
-                calendarForEvent = cal
+    func saveLastItem(item:TodoItem,spnd:Float,desc:String){
+        let msg = db.insert(item:item ,start: lastStar, span: lastSpan,spnd:spnd,desc:desc)
+        if msg == "ok"{
+            increaseDoneAmount()
+            
+            var title = item.name
+            if !langIsEn{
+                title = item.alias
             }
-        }
-        if !hasCalendar{
-            //let tmpCal = EKCalendar(for: .event, eventStore: eventStore)
-            //tmpCal.title = "timepie"
-            //tmpCal.source = eventStore.defaultCalendarForNewEvents?.source
-            //let ret = eventStore.saveCalendar(<#T##calendar: EKCalendar##EKCalendar#>, commit: <#T##Bool#>)
+            let calName = todoItems[item.code/100*100]!.name
+            let log = ap.addEventToCalendar(calendar: calName, code: lastCode, title: title, start: lastStar, desc: desc,spnd:spnd, span:lastSpan)
+            if "|" == log.prefix(1){
+                uiLog(log: log)
+            }else{
+                stdUserDefaults.set(log, forKey: UserInfoKeys.lastApId)
+                uiLogInfo(msg:"[\(item.code):\(item.name)] for \(Int(Float(lastSpan)*0.01666667)+1)mins \(spnd) \(desc) saved")
+            }
+            spendText.text = ""
+            if descText.isHidden{
+                descText.text = ""
+            }
         }else{
-            let doneEvent = EKEvent(eventStore: eventStore)
-            doneEvent.calendar = calendarForEvent
-            doneEvent.title = title
-            doneEvent.startDate = Date(timeIntervalSince1970: Double(start))
-            doneEvent.endDate   = Date()
-            var notes = "{code:\(item.code),span:\(Int(Double(span)/60.0))"
-            if desc != "" {
-                notes += ",desc:\(desc)"
-            }
-            if spnd > 0 {
-                notes += ",spnd:\(spnd)"
-            }
-            doneEvent.notes = notes + "}"
-            do{
-                try eventStore.save(doneEvent, span: .thisEvent, commit: true)
-                print("saved event id = \(doneEvent.eventIdentifier)")
-            }catch{
-                uiLogError(msg: "add Event to calendar failed!")
-            }
+            uiLogError(msg: msg)
         }
-        
     }
-    func checkAuth()->Bool{
-        let eventStore = EKEventStore()
-        switch EKEventStore.authorizationStatus(for: .event) {
-        case .authorized:
-            return true
-        case .denied:
-            print("Access denied")
-            return false
-        case .notDetermined:
-            eventStore.requestAccess(to: .event, completion: { (granted: Bool, NSError) -> Void in
-                if granted {
-                    print("Access Ok")
-                }else{
-                    print("Access denied")
-                }
-            })
-        default:
-            return false
-        }
-        return true
-    }
+    
+
     func setLastCode(code:Int){
         let msg = db.updateLastCode(newCode: code, name:todoItems[code]!.name)
         if msg == "ok" {

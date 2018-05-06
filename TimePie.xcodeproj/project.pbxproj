@@ -17,6 +17,7 @@
 		073FA4E72050FB0400168DA5 /* TimePie.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 073FA4E52050FB0400168DA5 /* TimePie.xcdatamodeld */; };
 		073FA4E92050FB0400168DA5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 073FA4E82050FB0400168DA5 /* Assets.xcassets */; };
 		073FA4EC2050FB0400168DA5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 073FA4EA2050FB0400168DA5 /* LaunchScreen.storyboard */; };
+		07E63CE0209EB21500C53F9C /* CalendarUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E63CDF209EB21500C53F9C /* CalendarUtil.swift */; };
 		07FD80E82052A8C6007D6187 /* actions.json in Resources */ = {isa = PBXBuildFile; fileRef = 073FA4F7205134A000168DA5 /* actions.json */; };
 /* End PBXBuildFile section */
 
@@ -34,6 +35,7 @@
 		073FA4EB2050FB0400168DA5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		073FA4ED2050FB0400168DA5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		073FA4F7205134A000168DA5 /* actions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = actions.json; sourceTree = "<group>"; };
+		07E63CDF209EB21500C53F9C /* CalendarUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarUtil.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +81,7 @@
 				07089B59205FD3CF0080E10C /* TodoModel.swift */,
 				073FA4DE2050FB0400168DA5 /* AppDelegate.swift */,
 				073FA4E02050FB0400168DA5 /* ViewController.swift */,
+				07E63CDF209EB21500C53F9C /* CalendarUtil.swift */,
 				07089B55205D5DF00080E10C /* SqliteUtil.swift */,
 				07089B502053E6440080E10C /* TodoPicker.swift */,
 				073FA4E22050FB0400168DA5 /* Main.storyboard */,
@@ -167,6 +170,7 @@
 				07089B5A205FD3D00080E10C /* TodoModel.swift in Sources */,
 				073FA4E72050FB0400168DA5 /* TimePie.xcdatamodeld in Sources */,
 				073FA4E12050FB0400168DA5 /* ViewController.swift in Sources */,
+				07E63CE0209EB21500C53F9C /* CalendarUtil.swift in Sources */,
 				073FA4DF2050FB0400168DA5 /* AppDelegate.swift in Sources */,
 				07089B56205D5DF00080E10C /* SqliteUtil.swift in Sources */,
 				07089B512053E6440080E10C /* TodoPicker.swift in Sources */,
