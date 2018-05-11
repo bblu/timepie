@@ -69,7 +69,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     
     static let localOffset = 28800
     let dateFmt = DateFormatter()
-    let minTimespan = 6
+    let minTimespan = 60
+    //同步到苹果日历的最短时间阈值=25mins
+    let minCalespan = 1500
     let stdUserDefaults = UserDefaults.standard
     
     let db = SqliteUtil.timePie
@@ -314,8 +316,12 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 if lastApId != nil && lastApId != ""{
                     let calName = todoItems[storCode/100*100]!.name
                     let apId = lastApId!
-                    let msg = ap.updateLastCalendar(calendar: calName, apId: apId, newSpan: newSpan, newDesc: newDesc, newSpnd: newSpnd)
-                    uiLog(log:msg)
+                    let newApId = ap.updateLastCalendar(calendar: calName, apId: apId,code:storCode ,newSpan: lastSpan, newDesc: newDesc, newSpnd: newSpnd)
+                    if newApId.prefix(1) != "|"{
+                        stdUserDefaults.set(newApId, forKey: UserInfoKeys.lastApId)
+                    }else{
+                        uiLog(log:newApId)
+                    }
                 }
                 flushLastLabel()
             }
@@ -475,13 +481,15 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             if !langIsEn{
                 title = item.alias
             }
-            let calName = todoItems[item.code/100*100]!.name
-            let log = ap.addEventToCalendar(calendar: calName, code: lastCode, title: title, start: lastStar, desc: desc,spnd:spnd, span:lastSpan)
-            if "|" == log.prefix(1){
-                uiLog(log: log)
-            }else{
-                stdUserDefaults.set(log, forKey: UserInfoKeys.lastApId)
-                uiLogInfo(msg:"[\(item.code):\(item.name)] for \(Int(Float(lastSpan)*0.01666667)+1)mins \(spnd) \(desc) saved")
+            if lastSpan > minCalespan || spnd > 4 || desc != "" {
+                let calName = todoItems[item.code/100*100]!.name
+                let log = ap.addEventToCalendar(calendar: calName, code: lastCode, title: title, start: lastStar, desc: desc,spnd:spnd, span:lastSpan)
+                if "|" == log.prefix(1){
+                    uiLog(log: log)
+                }else{
+                    stdUserDefaults.set(log, forKey: UserInfoKeys.lastApId)
+                    uiLogInfo(msg:"[\(item.code):\(item.name)] for \(Int(Float(lastSpan)*0.01666667)+1)mins \(spnd) \(desc) saved")
+                }
             }
             spendText.text = ""
             if descText.isHidden{

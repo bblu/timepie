@@ -59,6 +59,17 @@ class CalendarUtil{
         return calendarForEvent
     }
     
+    func getCalendarNotes(code:Int, desc:String,spnd:Float,span:Int)->String{
+        var notes = "{\"code\":\(code),\"span\":\(Int(Double(span)/60.0))"
+        if desc != "" {
+            notes += ",\"desc\":\"\(desc)\""
+        }
+        if spnd > 0 {
+            notes += ",\"spnd\":\(spnd)"
+        }
+        return notes + "}"
+    }
+    
     func addEventToCalendar(calendar:String, code:Int,title:String, start:Int,desc:String,spnd:Float,span:Int, stop:Int=0)->String{
         let auth = checkAuth()
         if !auth {
@@ -78,18 +89,12 @@ class CalendarUtil{
             doneEvent.startDate = Date(timeIntervalSince1970: Double(start))
             doneEvent.endDate =  stop == 0 ? Date() : Date(timeIntervalSince1970: Double(stop))
             
-            var notes = "{code:\(code),span:\(Int(Double(span)/60.0))"
-            if desc != "" {
-                notes += ",desc:\(desc)"
-            }
-            if spnd > 0 {
-                notes += ",spnd:\(spnd)"
-            }
-            doneEvent.notes = notes + "}"
+            
+            doneEvent.notes = getCalendarNotes(code: code, desc: desc, spnd: spnd, span: span)
             do{
                 try eventStore.save(doneEvent, span: .thisEvent, commit: true)
-                print("saved event id = \(doneEvent.eventIdentifier)")
-                return doneEvent.eventIdentifier
+                //print("saved event id = \(doneEvent.eventIdentifier!)")
+                return doneEvent.eventIdentifier!
                 //stdUserDefaults.set(doneEvent.eventIdentifier, forKey: UserInfoKeys.lastApId)
             }catch{
                 return "|-[error]-add Event to calendar failed!"
@@ -97,21 +102,37 @@ class CalendarUtil{
         }
         return "|-[unknown]"
     }
-    func updateLastCalendar(calendar:String,apId:String,newSpan: Int, newDesc: String, newSpnd: Float)->String{
+    func updateLastCalendar(calendar:String,apId:String,code:Int,newSpan: Int, newDesc: String, newSpnd: Float)->String{
         let auth = checkAuth()
         if !auth {
             return "|-[warn]-Not allowed to access Calendar"
         }
-        var eventStore = EKEventStore()
-        let cal = getCalendarByNameOrDefault(eventStore: &eventStore, calendar: calendar)
-        print(cal)
-        let event = eventStore.event(withIdentifier: apId)!
-        //eventStore.calendarItem(withIdentifier: apId)!
-        print(event.endDate)
-        print(event.startDate)
-        
-        //eventStore.remove(event, span: EKSpan.thisEvent, commit: true)
-        return "ok"
+        let eventStore = EKEventStore()
+        //let cal = getCalendarByNameOrDefault(eventStore: &eventStore, calendar: calendar)
+        //print(apId)
+        let optEvent = eventStore.event(withIdentifier: apId)
+        if optEvent == nil{
+            return "|-[error]-not find event for \(apId)"
+        }
+        let event = optEvent!
+        //try eventStore.remove(event, span: EKSpan.thisEvent, commit: true)
+        var span = newSpan
+        if newSpan < 0{
+            let diff = Calendar.current.dateComponents([.hour,.minute,.second], from: event.startDate, to: event.endDate)
+            span = diff.hour! * 3600 + diff.minute! * 60 + diff.second!
+            print(span)
+        }else{
+            event.endDate = Calendar.current.date(byAdding: .second, value: newSpan, to: event.startDate)!
+        }
+        event.notes = getCalendarNotes(code: code, desc: newDesc, spnd: newSpnd, span: span)
+        do{
+            try eventStore.save(event, span: .thisEvent, commit: true)
+            //print("update event id = \(event.eventIdentifier)")
+            return event.eventIdentifier
+        }catch{
+            return "|-[error]-update Event to calendar failed!"
+        }
+        return "|-[unknown]"
     }
     
     
