@@ -17,7 +17,7 @@
 		073FA4E72050FB0400168DA5 /* TimePie.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 073FA4E52050FB0400168DA5 /* TimePie.xcdatamodeld */; };
 		073FA4E92050FB0400168DA5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 073FA4E82050FB0400168DA5 /* Assets.xcassets */; };
 		073FA4EC2050FB0400168DA5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 073FA4EA2050FB0400168DA5 /* LaunchScreen.storyboard */; };
-		07E63CE0209EB21500C53F9C /* CalendarUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E63CDF209EB21500C53F9C /* CalendarUtil.swift */; };
+		0766A126217CAABB00FFED14 /* CalendarUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0766A125217CAABB00FFED14 /* CalendarUtil.swift */; };
 		07FD80E82052A8C6007D6187 /* actions.json in Resources */ = {isa = PBXBuildFile; fileRef = 073FA4F7205134A000168DA5 /* actions.json */; };
 /* End PBXBuildFile section */
 
@@ -35,7 +35,7 @@
 		073FA4EB2050FB0400168DA5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		073FA4ED2050FB0400168DA5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		073FA4F7205134A000168DA5 /* actions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = actions.json; sourceTree = "<group>"; };
-		07E63CDF209EB21500C53F9C /* CalendarUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarUtil.swift; sourceTree = "<group>"; };
+		0766A125217CAABB00FFED14 /* CalendarUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CalendarUtil.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,10 +78,10 @@
 		073FA4DD2050FB0400168DA5 /* TimePie */ = {
 			isa = PBXGroup;
 			children = (
+				0766A125217CAABB00FFED14 /* CalendarUtil.swift */,
 				07089B59205FD3CF0080E10C /* TodoModel.swift */,
 				073FA4DE2050FB0400168DA5 /* AppDelegate.swift */,
 				073FA4E02050FB0400168DA5 /* ViewController.swift */,
-				07E63CDF209EB21500C53F9C /* CalendarUtil.swift */,
 				07089B55205D5DF00080E10C /* SqliteUtil.swift */,
 				07089B502053E6440080E10C /* TodoPicker.swift */,
 				073FA4E22050FB0400168DA5 /* Main.storyboard */,
@@ -121,11 +121,12 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 0920;
-				LastUpgradeCheck = 0920;
+				LastUpgradeCheck = 0940;
 				ORGANIZATIONNAME = "lu wenbo";
 				TargetAttributes = {
 					073FA4DA2050FB0400168DA5 = {
 						CreatedOnToolsVersion = 9.2;
+						LastSwiftMigration = 1000;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -170,7 +171,7 @@
 				07089B5A205FD3D00080E10C /* TodoModel.swift in Sources */,
 				073FA4E72050FB0400168DA5 /* TimePie.xcdatamodeld in Sources */,
 				073FA4E12050FB0400168DA5 /* ViewController.swift in Sources */,
-				07E63CE0209EB21500C53F9C /* CalendarUtil.swift in Sources */,
+				0766A126217CAABB00FFED14 /* CalendarUtil.swift in Sources */,
 				073FA4DF2050FB0400168DA5 /* AppDelegate.swift in Sources */,
 				07089B56205D5DF00080E10C /* SqliteUtil.swift in Sources */,
 				07089B512053E6440080E10C /* TodoPicker.swift in Sources */,
@@ -213,6 +214,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -220,6 +222,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -270,6 +273,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -277,6 +281,7 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
@@ -313,10 +318,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = V3R5N5T335;
 				INFOPLIST_FILE = TimePie/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = bblu.china.TimePie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -328,10 +334,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = V3R5N5T335;
 				INFOPLIST_FILE = TimePie/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = bblu.china.TimePie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;

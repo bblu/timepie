@@ -3,6 +3,7 @@
 //  TimePie
 //
 //  Created by lu wenbo on 08/03/2018.
+//  Update to swift 4.3 by lu wenbo on 21/10/2018.
 //  Copyright © 2018 lu wenbo. All rights reserved.
 //
 
@@ -199,7 +200,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     override func viewDidLoad() {
         super.viewDidLoad()
         NotificationCenter.default.addObserver(self, selector: #selector(flushUI(_:)),
-                                               name: NSNotification.Name.UIApplicationDidBecomeActive,
+                                               name: UIApplication.didBecomeActiveNotification,
                                                object: nil)
         if let path = Bundle.main.path(forResource: "actions", ofType: "json") {
             do {
@@ -236,7 +237,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         NotificationCenter.default.removeObserver(self,
-            name:NSNotification.Name.UIApplicationDidBecomeActive,object: nil)
+            name:UIApplication.didBecomeActiveNotification,object: nil)
         print("removeObserver")
     }
     
@@ -270,9 +271,9 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     @IBAction func addDescription(_ sender: UIButton) {
         descText.isHidden = !descText.isHidden
         if descText.isHidden{
-            sender.setTitle("➕", for: UIControlState.normal)
+            sender.setTitle("➕", for: UIControl.State.normal)
         }else{
-            sender.setTitle("➖", for: UIControlState.normal)
+            sender.setTitle("➖", for: UIControl.State.normal)
         }
         self.view.endEditing(true)
     }
@@ -286,7 +287,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             let maxValue:Float = Float(storSpan)
             spanSlider.maximumValue = maxValue * 1.25
             spanSlider.setValue(maxValue, animated: false)
-            lastButton.setTitle("💾",for:UIControlState.normal)
+            lastButton.setTitle("💾",for:UIControl.State.normal)
             setPickerViewTo(code:storCode)
         }else{
             //save Edit
@@ -325,7 +326,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
                 }
                 flushLastLabel()
             }
-            lastButton.setTitle("⚙️",for:UIControlState.normal)
+            lastButton.setTitle("⚙️",for:UIControl.State.normal)
             setPickerViewTo(code: currCode)
         }
         statisticsLabel.isHidden = spanSlider.isHidden
@@ -334,7 +335,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     }
     @IBAction func cancelEditLast(_ sender: UIButton) {
         flushLastLabel()
-        lastButton.setTitle("⚙️",for:UIControlState.normal)
+        lastButton.setTitle("⚙️",for:UIControl.State.normal)
         spanSlider.isHidden = true
         sender.isHidden = true
         statisticsLabel.isHidden = false
@@ -397,8 +398,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             let btnItem = UIButton(frame: CGRect(x:px, y: py, width: 80, height: 30))
             //btnItem.addTarget(self, action: Selector("clickItem"), for: UIControlEvents.touchUpInside)
             btnItem.translatesAutoresizingMaskIntoConstraints = false
-            btnItem.setTitle(item.icon+item.alias, for: UIControlState.normal)
-            btnItem.setTitleColor(UIColor.blue, for: UIControlState.normal)
+            btnItem.setTitle(item.icon+item.alias, for: UIControl.State.normal)
+            btnItem.setTitleColor(UIColor.blue, for: UIControl.State.normal)
             //btnItem.backgroundColor = UIColor.lightGray
             // btnItem.addTarget(self, action: Selector("clickItem"), for: UIControlEvents.touchUpInside)
             self.view.addSubview(btnItem)
@@ -608,10 +609,10 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
             return String(format: "%2d:%02d", ma, interval % 60)
         }
         let ha = ma / 60
-        let hh = ha % 24
+        //let hh = ha % 24
         let mm = ma % 60
         let ss = interval % 60
-        return String(format: "%d:%02d:%02d", hh, mm, ss)
+        return String(format: "%d:%02d:%02d", ha, mm, ss)
     }
     func shortTime(interval:Double,days:Double)->String{
         if interval > (3600 * days){
