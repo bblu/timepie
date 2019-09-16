@@ -71,8 +71,8 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
     static let localOffset = 28800
     let dateFmt = DateFormatter()
     let minTimespan = 60
-    //同步到苹果日历的最短时间阈值=25mins
-    let minCalespan = 1500
+    //同步到苹果日历的最短时间阈值=15mins
+    let minCalespan = 900
     let stdUserDefaults = UserDefaults.standard
     
     let db = SqliteUtil.timePie
