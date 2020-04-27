@@ -612,7 +612,7 @@ class ViewController: UIViewController,UIPickerViewDataSource,UIPickerViewDelega
         //let hh = ha % 24
         let mm = ma % 60
         let ss = interval % 60
-        print("formateTime = \(interval):\(ha), \(mm), \(ss)")
+        //print("formateTime = \(interval):\(ha), \(mm), \(ss)")
         return String(format: "%d:%02d:%02d", ha, mm, ss)
     }
     func shortTime(interval:Double,days:Double)->String{
